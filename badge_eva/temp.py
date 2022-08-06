@@ -94,7 +94,7 @@ while True:
     badger.line(0, 101, 296, 101)
     badger.pen(0)
     badger.text("Temperature   "+correctedtemp+" C", 8, 50, TEXT_SIZE)
-    badger.text(describe_temperature(temperature), 245, 50, TEXT_SIZE)
+    badger.text(describe_temperature(correctedtemp), 245, 50, TEXT_SIZE)
     badger.text("Pressure       "+press+" hPa", 8, 70, TEXT_SIZE)
     badger.text(describe_pressure(pressurehpa), 245, 70, TEXT_SIZE)
     badger.text("Humidity       "+humid+" %", 8, 90, TEXT_SIZE)

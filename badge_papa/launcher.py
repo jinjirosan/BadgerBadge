@@ -57,6 +57,7 @@ examples = [
     ("_temp", 6),
     ("_qrgen", 8),
     ("_image", 3),
+    ("_elevation", 1),
 ]
 
 font_sizes = (0.5, 0.7, 0.9)
