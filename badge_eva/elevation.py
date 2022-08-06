@@ -1,3 +1,8 @@
+# Badge Platform Eva - hardware platform v3.0
+# (2022) Voor m'n lieve guppie
+#
+# elevation.py : v3.0-refactor 1.4
+
 from machine import Pin, I2C
 from time import sleep
 from bme680 import *
@@ -77,9 +82,9 @@ def draw_init_screen():
     badger.pen(0)
     badger.rectangle(0, 39, 98, 71)
     badger.pen(15)
-    badger.text("Altitude", 12, 50, TEXT_SIZE)
+    badger.text("Altitude", 20, 50, TEXT_SIZE)
     badger.text("-", 10 , 79, 1)
-    badger.text("meter", 20, 100, TEXT_SIZE)
+    badger.text("meter", 25, 100, TEXT_SIZE)
     badger.pen(0)
     #draw temperature-pressure (calc) in white
     badger.text("Temperature", 110, 50, TEXT_SIZE)
@@ -146,9 +151,9 @@ def draw_elevation():
     badger.pen(0)
     badger.rectangle(0, 39, 98, 71)
     badger.pen(15)
-    badger.text("Altitude", 12, 50, TEXT_SIZE)
+    badger.text("Altitude", 20, 50, TEXT_SIZE)
     badger.text(read_sensor_altitude(), 10 , 79, 0.8)
-    badger.text("meter", 20, 100, TEXT_SIZE)
+    badger.text("meter", 25, 100, TEXT_SIZE)
     badger.pen(0)
     #draw temperature-pressure (calc) in white
     badger.text("Temperature", 110, 50, TEXT_SIZE)
