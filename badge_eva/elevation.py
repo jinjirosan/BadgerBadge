@@ -21,7 +21,7 @@ bme = BME680_I2C(i2c=i2c)
 temp_offset = -1.5
 
 # Pressure (hPa) at sea level The Hague
-bme.sea_level_pressure = 1023.7
+bme.sea_level_pressure = 1029
 
 # Initial values
 zeroed_level_pressure = 0
@@ -64,25 +64,47 @@ def draw_elevation():
     badger.pen(0)
     badger.line(0, 39, 296, 39) # top horizontal line
     badger.line(0, 110, 296, 110) # bottom horizontal line
+    badger.line(98, 40, 98, 109)  # vertical center line 
     badger.line(215, 40, 215, 109)  # vertical floor line  
     badger.pen(0)
     # for debugging use, print values to console
+    print("Sensor values")
     print(read_sensor_temp()+" C")
     print(read_sensor_pressure()+" hPa")
     print(read_sensor_altitude()+" m")
     print(calculate_floor())
+    print("-------------")
+    print("stored values")
+    print(str(temp_ground)+" C")
+    print(str(press_ground)+" hPa")
     # draw values to the eINK display
     badger.text("Groundlevel: ", 8, 29, 0.41)
     badger.text(str(temp_ground)+" C", 90, 29, 0.41)
-    badger.text(str(press_ground)+" hPa", 180, 29, 0.41)
-    badger.text("Temperature   "+read_sensor_temp()+" C", 8, 50, TEXT_SIZE)
-    badger.text("Pressure      "+read_sensor_pressure()+" hPa", 8, 70, TEXT_SIZE)
-    badger.text("Altitude        "+read_sensor_altitude()+" m", 8, 90, TEXT_SIZE)
+    badger.text(str(press_ground)+" hPa", 150, 29, 0.41)
+    # draw altitude in black - values in white
+    badger.pen(0)
+    badger.rectangle(0, 39, 98, 71)
+    badger.pen(15)
+    badger.text("Altitude", 12, 50, TEXT_SIZE)
+    badger.text(read_sensor_altitude(), 10 , 79, 0.8)
+    badger.text("meter", 20, 100, TEXT_SIZE)
+    badger.pen(0)
+    #draw temperature-pressure (calc) in white
+    badger.text("Temperature", 110, 50, TEXT_SIZE)
+    badger.text(read_sensor_temp()+" C", 110, 65, TEXT_SIZE)
+    badger.text("Pressure", 110, 85, TEXT_SIZE)
+    badger.text(read_sensor_pressure()+" hPa", 110, 100, TEXT_SIZE)
+    # draw floor in black - values in white
+    badger.pen(0)
+    badger.rectangle(215, 39, 296, 71)
+    badger.pen(15)
     badger.text("Floor", 237, 50, TEXT_SIZE)
-    badger.text(calculate_floor(), 238, 85, 2)
+    badger.text(calculate_floor(), 238, 85, 1.2)
+    badger.pen(0)
+    # draw menu options values in black    
     badger.text("Zero", 22, 120, TEXT_SIZE)
     badger.text("Calc", 138, 120, TEXT_SIZE)
-    badger.text("The Hague", 215, 120, TEXT_SIZE)
+    badger.text("Test", 240, 120, TEXT_SIZE)
     badger.thickness(1)
     badger.update()
     badger.pen(15)
@@ -120,7 +142,7 @@ while True:
         draw_elevation()
 
     if badger.pressed(badger2040.BUTTON_C): # set example height based on The Hague
-        bme.sea_level_pressure = 1025
+        bme.sea_level_pressure = 1031
         draw_elevation()
 
     if badger.pressed(badger2040.BUTTON_UP):
