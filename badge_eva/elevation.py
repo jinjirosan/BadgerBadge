@@ -6,22 +6,24 @@ import badger2040
 import badger_os
 import math
 
+# Default badges setup
 badger = badger2040.Badger2040()
 badger.update_speed(badger2040.UPDATE_FAST)
 
 TITLE_SIZE = 0.68
 TEXT_SIZE = 0.5
 
+# BME680 sensor setup
 i2c = I2C(0, scl=Pin(5), sda=Pin(4))
 bme = BME680_I2C(i2c=i2c)
 
-#temperature offset to compensate for temperature of the sensor itself
+# Temperature offset to compensate for temperature of the sensor itself
 temp_offset = -1.5
 
-#pressure (hPa) at sea level The Hague
+# Pressure (hPa) at sea level The Hague
 bme.sea_level_pressure = 1023.7
 
-#pressure (hPa) at zeroed level
+# Pressure (hPa) at zeroed level (not sure I'll use this in this version)
 zeroed_level_pressure = 1000
 
 def read_sensor_temp():
@@ -56,15 +58,18 @@ def draw_elevation():
     badger.rectangle(0, 0, 296, 22)
     badger.pen(15)
     badger.text("Hoe hoog zitten we?", 38, 10, TITLE_SIZE)
+    # draw framework
     badger.pen(0)
     badger.line(0, 39, 296, 39) # top horizontal line
     badger.line(0, 110, 296, 110) # bottom horizontal line
     badger.line(215, 40, 215, 109)  # vertical floor line  
     badger.pen(0)
+    # for debugging use, print values to console
     print(read_sensor_temp()+" C")
     print(read_sensor_pressure()+" hPa")
     print(read_sensor_altitude()+" m")
     print(calculate_floor())
+    # draw values to the eINK display
     badger.text("Temperature   "+read_sensor_temp()+" C", 8, 50, TEXT_SIZE)
     badger.text("Pressure      "+read_sensor_pressure()+" hPa", 8, 70, TEXT_SIZE)
     badger.text("Altitude        "+read_sensor_altitude()+" m", 8, 90, TEXT_SIZE)
@@ -77,10 +82,11 @@ def draw_elevation():
     badger.update()
     badger.pen(15)
     badger.clear()
+    # turn of activity LED to indicate function done
     badger.led(0)
 
 # ------------------------------
-#        Program setup
+# Setup for elevation.py
 # ------------------------------
 
 # Create a new Badger and set it to update NORMAL
@@ -120,8 +126,5 @@ while True:
         time.sleep(4)
         draw_elevation()
 
-
-#    display.update()
-
     # If on battery, halt the Badger to save power, it will wake up if any of the front buttons are pressed
-#    display.halt()
+    #badger.halt()
