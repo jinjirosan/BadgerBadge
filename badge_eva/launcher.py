@@ -1,7 +1,7 @@
-# Badge Platform Eva 3.0 - refactor 1.1
-# 
-# Voor m'n lieve guppie (2022)
+# Badge Platform Eva - hardware platform v3.0
+# (2022) Voor m'n lieve guppie
 #
+# launcher.py : v3.0-refactor 1.2
 
 import gc
 import time
