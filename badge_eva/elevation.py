@@ -20,8 +20,8 @@ bme = BME680_I2C(i2c=i2c)
 # Temperature offset to compensate for temperature of the sensor itself
 temp_offset = -1.5
 
-# Pressure (hPa) at sea level The Hague
-bme.sea_level_pressure = 1029
+# Pressure (hPa) at sea level - average for NL
+bme.sea_level_pressure = 1015.5
 
 # Initial values
 zeroed_level_pressure = 0
@@ -48,6 +48,65 @@ def calculate_floor():
     calcfloor = bme.altitude / 2.5
     floor= str(round(calcfloor))
     return floor
+
+def draw_init_screen():
+    badger.led(128)
+    # Set display parameters
+    badger.pen(15)
+    badger.font("sans")
+    badger.thickness(2)
+    # black box on top with title
+    badger.pen(0)
+    badger.rectangle(0, 0, 296, 22)
+    badger.pen(15)
+    badger.text("Hoe hoog zitten we?", 38, 10, TITLE_SIZE)
+    # draw framework
+    badger.pen(0)
+    badger.line(0, 39, 296, 39) # top horizontal line
+    badger.line(0, 110, 296, 110) # bottom horizontal line
+    badger.line(98, 40, 98, 109)  # vertical center line 
+    badger.line(215, 40, 215, 109)  # vertical floor line  
+    badger.pen(0)
+    # draw values to the eINK display
+    badger.thickness(1)
+    badger.text("Groundlevel: ", 8, 29, 0.41)
+    badger.text(str(temp_ground)+" C", 90, 29, 0.41)
+    badger.text(str(press_ground)+" hPa", 150, 29, 0.41)
+    # draw altitude in black - values in white
+    badger.thickness(2)
+    badger.pen(0)
+    badger.rectangle(0, 39, 98, 71)
+    badger.pen(15)
+    badger.text("Altitude", 12, 50, TEXT_SIZE)
+    badger.text("-", 10 , 79, 1)
+    badger.text("meter", 20, 100, TEXT_SIZE)
+    badger.pen(0)
+    #draw temperature-pressure (calc) in white
+    badger.text("Temperature", 110, 50, TEXT_SIZE)
+    badger.thickness(1)
+    badger.text(read_sensor_temp()+" C", 110, 65, TEXT_SIZE)
+    badger.thickness(2)
+    badger.text("Pressure", 110, 85, TEXT_SIZE)
+    badger.thickness(1)
+    badger.text(read_sensor_pressure()+" hPa", 110, 100, TEXT_SIZE)
+    badger.thickness(2)
+    # draw floor in black - values in white
+    badger.pen(0)
+    badger.rectangle(215, 39, 296, 71)
+    badger.pen(15)
+    badger.text("Floor", 237, 50, TEXT_SIZE)
+    badger.text("-", 238, 79, 1)
+    badger.pen(0)
+    # draw menu options values in black    
+    badger.text("Zero", 22, 120, TEXT_SIZE)
+    badger.text("Calc", 138, 120, TEXT_SIZE)
+    badger.text("Test", 240, 120, TEXT_SIZE)
+    badger.thickness(1)
+    badger.update()
+    badger.pen(15)
+    badger.clear()
+    # turn of activity LED to indicate function done
+    badger.led(0)
 
 def draw_elevation():
     badger.led(128)
@@ -78,10 +137,12 @@ def draw_elevation():
     print(str(temp_ground)+" C")
     print(str(press_ground)+" hPa")
     # draw values to the eINK display
+    badger.thickness(1)
     badger.text("Groundlevel: ", 8, 29, 0.41)
     badger.text(str(temp_ground)+" C", 90, 29, 0.41)
     badger.text(str(press_ground)+" hPa", 150, 29, 0.41)
     # draw altitude in black - values in white
+    badger.thickness(2)
     badger.pen(0)
     badger.rectangle(0, 39, 98, 71)
     badger.pen(15)
@@ -91,9 +152,13 @@ def draw_elevation():
     badger.pen(0)
     #draw temperature-pressure (calc) in white
     badger.text("Temperature", 110, 50, TEXT_SIZE)
+    badger.thickness(1)
     badger.text(read_sensor_temp()+" C", 110, 65, TEXT_SIZE)
+    badger.thickness(2)
     badger.text("Pressure", 110, 85, TEXT_SIZE)
+    badger.thickness(1)
     badger.text(read_sensor_pressure()+" hPa", 110, 100, TEXT_SIZE)
+    badger.thickness(2)
     # draw floor in black - values in white
     badger.pen(0)
     badger.rectangle(215, 39, 296, 71)
@@ -117,16 +182,16 @@ def draw_elevation():
 # ------------------------------
 
 # Create a new Badger and set it to update NORMAL
-badger.led(128)
+#badger.led(128)
 badger.update_speed(badger2040.UPDATE_NORMAL)
 
 # ------------------------------
 #       Main program
 # ------------------------------
-read_sensor_temp()
-read_sensor_pressure()
+#read_sensor_temp()
+#read_sensor_pressure()
 
-draw_elevation()
+draw_init_screen()
 
 while True:
     if badger.pressed(badger2040.BUTTON_A): # reset groundlevel to this pressurelevel
