@@ -1,7 +1,6 @@
-# Badge Platform Eva 3.0
+# Badge Platform Eva 3.0 - refactor 1.1
 # 
-# version 3.0-refactor 0.1
-#
+# Voor m'n lieve guppie (2022)
 #
 
 import gc
@@ -65,9 +64,9 @@ icons_width = 576
 examples = [
     ("_badge", 5),
     ("_list", 4),
-    ("_temp", 6),
-    ("_qrgen", 8),
     ("_image", 3),
+    ("_qrgen", 8),
+    ("_temp", 6),
     ("_elevation", 1),
 ]
 
