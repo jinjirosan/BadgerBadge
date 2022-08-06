@@ -23,8 +23,10 @@ temp_offset = -1.5
 # Pressure (hPa) at sea level The Hague
 bme.sea_level_pressure = 1023.7
 
-# Pressure (hPa) at zeroed level (not sure I'll use this in this version)
-zeroed_level_pressure = 1000
+# Initial values
+zeroed_level_pressure = 0
+temp_ground = 0
+press_ground = 0
 
 def read_sensor_temp():
     temperature = bme.temperature
@@ -70,6 +72,9 @@ def draw_elevation():
     print(read_sensor_altitude()+" m")
     print(calculate_floor())
     # draw values to the eINK display
+    badger.text("Groundlevel: ", 8, 29, 0.41)
+    badger.text(str(temp_ground)+" C", 90, 29, 0.41)
+    badger.text(str(press_ground)+" hPa", 180, 29, 0.41)
     badger.text("Temperature   "+read_sensor_temp()+" C", 8, 50, TEXT_SIZE)
     badger.text("Pressure      "+read_sensor_pressure()+" hPa", 8, 70, TEXT_SIZE)
     badger.text("Altitude        "+read_sensor_altitude()+" m", 8, 90, TEXT_SIZE)
@@ -86,7 +91,7 @@ def draw_elevation():
     badger.led(0)
 
 # ------------------------------
-# Setup for elevation.py
+#        Program setup
 # ------------------------------
 
 # Create a new Badger and set it to update NORMAL
@@ -105,7 +110,9 @@ while True:
     if badger.pressed(badger2040.BUTTON_A): # reset groundlevel to this pressurelevel
         bme.sea_level_pressure = bme.pressure
         read_sensor_temp()
+        temp_ground = read_sensor_temp()
         read_sensor_pressure()
+        press_ground = read_sensor_pressure()
         draw_elevation()
 
     if badger.pressed(badger2040.BUTTON_B): # calculate floor based on pressure difference
@@ -126,5 +133,8 @@ while True:
         time.sleep(4)
         draw_elevation()
 
+
+#    display.update()
+
     # If on battery, halt the Badger to save power, it will wake up if any of the front buttons are pressed
-    #badger.halt()
+#    display.halt()
