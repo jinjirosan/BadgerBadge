@@ -1,3 +1,8 @@
+# Badge Platform Eva - hardware platform v3.0
+# (2022) Voor m'n lieve guppie
+#
+# temp.py : v3.0-refactor 1.4
+
 import time
 from breakout_bme68x import BreakoutBME68X, STATUS_HEATER_STABLE
 import pimoroni_i2c
