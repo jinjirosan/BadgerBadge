@@ -44,6 +44,10 @@ time5 = badge.readline()      # "12"
 activity6 = badge.readline()  # "pyama"
 time6 = badge.readline()      # "7"
 
+# List items taken from timer.txt 
+activity_list_items = [activity1, activity2, activity3, activity4, activity5, activity6]
+save_checklist = False
+
 # temporary activity as placeholder for menu function
 activity0 = activity1
 time0 = time1
