@@ -124,10 +124,10 @@ def draw_frame():
     display.thickness(2)
     # black box on top
     display.pen(12)
-    display.rectangle(0, 0, 180, 22)
+    display.rectangle(0, 0, 210, 22)
     display.pen(0)
     # title inverse
-    display.text(TIMER_TITLE, 10, 10, TITLE_SIZE)
+    display.text(TIMER_TITLE, 18, 10, TITLE_SIZE)
     display.pen(12)
     display.rectangle(0, HEIGHT - 20, WIDTH, 20) # ABC bar
     display.pen(0)
