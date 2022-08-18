@@ -1,7 +1,7 @@
 # Badge Platform Eva - hardware platform v3.0
 # (2022) Voor m'n lieve guppie
 #
-# test_countdown.py : v3.0-refactor 0.3
+# test_countdown.py : v3.0-refactor 0.4 (cleanup)
 
 import binascii
 import badger2040
@@ -9,9 +9,9 @@ import badger_os
 import time
 import machine
 
-# **** Put your list title here *****
-list_title = "Wat moet ik doen?"
-list_file = "timer.txt"
+# Default title and key/value file
+TIMER_TITLE = "Wat moet ik doen?"
+TIMER_FILE = "timer.txt"
 
 # Global Constants
 WIDTH = badger2040.WIDTH
@@ -41,6 +41,20 @@ LEFT_PADDING = 5
 NAME_PADDING = 20
 DETAIL_SPACING = 10
 
+DEFAULT_TEXT="""
+aankleden
+900
+ontbijt
+960
+schoenen
+300
+douchen
+1200
+pootjes wassen
+720
+pyama
+420"""
+
 # Create a new Badger and set it to update NORMAL
 display = badger2040.Badger2040()
 display.led(128)
@@ -58,17 +72,17 @@ except OSError:
 
 # Read in the next 6 lines
 activity1 = badge.readline()  # "aankleden"
-time1 = badge.readline()      # "15"
+time1 = badge.readline()      # "900" : 15mins
 activity2 = badge.readline()  # "ontbijt"
-time2 = badge.readline()      # "16"
+time2 = badge.readline()      # "960" : 16mins
 activity3 = badge.readline()  # "schoenen"
-time3 = badge.readline()      # "5"
+time3 = badge.readline()      # "300" : 5mins
 activity4 = badge.readline()  # "douchen"
-time4 = badge.readline()      # "20"
+time4 = badge.readline()      # "1200" : 20mins
 activity5 = badge.readline()  # "pootjes wassen"
-time5 = badge.readline()      # "12"
+time5 = badge.readline()      # "720" : 12mins
 activity6 = badge.readline()  # "pyama"
-time6 = badge.readline()      # "7"
+time6 = badge.readline()      # "420" : 7mins
 
 # List items taken from timer.txt 
 activity_list_items = [activity1, activity2, activity3, activity4, activity5, activity6]
@@ -207,13 +221,7 @@ def countdown(time_sec):
     display.text("KLAAR", 100, 60, TIME_TEXT_SIZE)
     display.update()
 
-
-# ------------------------------
-#      Drawing functions
-# ------------------------------
-
-
-# Draw a upward arrow
+# Draw upward arrow
 def draw_up(x, y, width, height, thickness, padding):
     border = (thickness // 4) + padding
     display.line(x + border, y + height - border,
@@ -222,7 +230,7 @@ def draw_up(x, y, width, height, thickness, padding):
                  x + width - border, y + height - border)
 
 
-# Draw a downward arrow
+# Draw downward arrow
 def draw_down(x, y, width, height, thickness, padding):
     border = (thickness // 2) + padding
     display.line(x + border, y + border,
@@ -313,7 +321,6 @@ while True:
                 state["current_item"] += 1
                 changed = True
 
-                
                 activity_select = next(activity_iter)
                 
 
@@ -330,7 +337,7 @@ while True:
         y = LIST_PADDING + 12
         display.pen(0)
         display.thickness(3)
-        display.text(list_title, LIST_PADDING, y, TITLE_TEXT_SIZE)
+        display.text(TIMER_TITLE, LIST_PADDING, y, TITLE_TEXT_SIZE)
 
         y += 12
         display.pen(0)
