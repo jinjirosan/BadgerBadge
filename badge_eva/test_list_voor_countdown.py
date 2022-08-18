@@ -106,7 +106,7 @@ def truncatestring(text, text_size, width):
             return text
 
 def calculate_activity_time():
-    time1_m = int(time1) / 6
+    time1_m = int(time1) / 60
     time1_m_r= str(round(time1_m))
     return activity_time
 
