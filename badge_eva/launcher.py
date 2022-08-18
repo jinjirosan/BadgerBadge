@@ -65,7 +65,7 @@ examples = [
     ("_badge", 5),
     ("_list", 4),
     ("_image", 3),
-    ("_qrgen", 8),
+    ("_timer", 0),
     ("_temp", 6),
     ("_elevation", 1),
 ]
