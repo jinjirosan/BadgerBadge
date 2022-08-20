@@ -1,7 +1,7 @@
 # Badge Platform Eva - hardware platform v3.0
 # (2022) Voor m'n lieve guppie
 #
-# timer.py : v3.0-refactor 0.5 (alpha code release)
+# timer.py : v3.0-refactor 0.6 (countdown visualization)
 
 import badger2040
 import badger_os
@@ -205,30 +205,24 @@ def draw_timer_framework():
 
 def countdown(time_sec):
     display.update_speed(badger2040.UPDATE_TURBO)
-    intervals(5,16)
-    print(intervals)
     while time_sec:
         mins, secs = divmod(time_sec, 60)
         timeformat = '{:02d}:{:02d}'.format(mins,secs)
         print(timeformat, end='\r')
         time.sleep(1)
         time_sec -= 1
-#        display.pen(15)
-#        display.rectangle(100, 45, 100, 30)
-#        display.pen(0)
-#        display.thickness(2)
-#        display.text(timeformat, 100, 60, TIME_TEXT_SIZE)
-#        display.update()
+        display.pen(15)
+        display.rectangle(100, 45, 100, 30)
+        display.pen(0)
+        display.thickness(2)
+        display.text(timeformat, 100, 60, TIME_TEXT_SIZE)
+        display.update()
     print("stoppppp")
-#    display.pen(0)
-#    display.rectangle(100, 45, 100, 30)
-#    display.pen(15)
-#    display.text("KLAAR", 100, 60, TIME_TEXT_SIZE)
-#    display.update()
-
-def intervals(parts, duration):
-    part_duration = duration / parts
-    return [(i * part_duration, (i + 1) * part_duration) for i in range(parts)]
+    display.pen(0)
+    display.rectangle(100, 45, 100, 30)
+    display.pen(15)
+    display.text("KLAAR", 100, 60, TIME_TEXT_SIZE)
+    display.update()
 
 # Create a new Badger and set it to update FAST
 display = badger2040.Badger2040()
