@@ -57,16 +57,18 @@ badger_os.state_load("launcher", state)
 display.invert(state["inverted"])
  
 icons = bytearray(launchericons.data())
-icons_width = 576
+icons_width = 576  # original size
+#icons_width = 832
+#icons_width = 640
 
 # the array is filename.py , icon number to display
-# clock=0, fonts=1, book=2, image=3, list=4, badge=5, info=6, help=7, QR=8
+# timer=0, elevation=1, temp=2, image=3, list=4, badge=5, info=6, help=7, radio=8
 examples = [
     ("_badge", 5),
     ("_list", 4),
     ("_image", 3),
     ("_timer", 0),
-    ("_temp", 6),
+    ("_temp", 2),
     ("_elevation", 1),
 ]
 

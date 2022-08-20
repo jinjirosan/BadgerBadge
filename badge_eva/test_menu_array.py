@@ -1,13 +1,13 @@
 import time
-import machine
-import badger2040
+#import machine
+#import badger2040
 
 # Open the timer file
 try:
     badge = open("timer.txt", "r")
 except OSError:
     with open("timer.txt", "w") as f:
-        f.write(DEFAULT_TEXT)
+        #f.write(DEFAULT_TEXT)
         f.flush()
     badge = open("timer.txt", "r")
 
