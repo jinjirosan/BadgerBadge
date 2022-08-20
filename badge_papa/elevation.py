@@ -1,3 +1,8 @@
+# Badge Platform Eva - hardware platform v3.0
+# (2022) Voor m'n lieve guppie
+#
+# elevation.py : v3.0-refactor 1.4
+
 from machine import Pin, I2C
 from time import sleep
 from bme680 import *
@@ -6,23 +11,27 @@ import badger2040
 import badger_os
 import math
 
+# Default badges setup
 badger = badger2040.Badger2040()
 badger.update_speed(badger2040.UPDATE_FAST)
 
 TITLE_SIZE = 0.68
 TEXT_SIZE = 0.5
 
+# BME680 sensor setup
 i2c = I2C(0, scl=Pin(5), sda=Pin(4))
 bme = BME680_I2C(i2c=i2c)
 
-#temperature offset to compensate for temperature of the sensor itself
+# Temperature offset to compensate for temperature of the sensor itself
 temp_offset = -1.5
 
-#pressure (hPa) at sea level The Hague
-bme.sea_level_pressure = 1023.7
+# Pressure (hPa) at sea level - average for NL
+bme.sea_level_pressure = 1015.5
 
-#pressure (hPa) at zeroed level
-zeroed_level_pressure = 1000
+# Initial values
+zeroed_level_pressure = 0
+temp_ground = 0
+press_ground = 0
 
 def read_sensor_temp():
     temperature = bme.temperature
@@ -45,6 +54,65 @@ def calculate_floor():
     floor= str(round(calcfloor))
     return floor
 
+def draw_init_screen():
+    badger.led(128)
+    # Set display parameters
+    badger.pen(15)
+    badger.font("sans")
+    badger.thickness(2)
+    # black box on top with title
+    badger.pen(0)
+    badger.rectangle(0, 0, 296, 22)
+    badger.pen(15)
+    badger.text("Hoe hoog zitten we?", 38, 10, TITLE_SIZE)
+    # draw framework
+    badger.pen(0)
+    badger.line(0, 39, 296, 39) # top horizontal line
+    badger.line(0, 110, 296, 110) # bottom horizontal line
+    badger.line(98, 40, 98, 109)  # vertical center line 
+    badger.line(215, 40, 215, 109)  # vertical floor line  
+    badger.pen(0)
+    # draw values to the eINK display
+    badger.thickness(1)
+    badger.text("Groundlevel: ", 8, 29, 0.41)
+    badger.text(str(temp_ground)+" C", 90, 29, 0.41)
+    badger.text(str(press_ground)+" hPa", 150, 29, 0.41)
+    # draw altitude in black - values in white
+    badger.thickness(2)
+    badger.pen(0)
+    badger.rectangle(0, 39, 98, 71)
+    badger.pen(15)
+    badger.text("Altitude", 20, 50, TEXT_SIZE)
+    badger.text("-", 10 , 79, 1)
+    badger.text("meter", 25, 100, TEXT_SIZE)
+    badger.pen(0)
+    #draw temperature-pressure (calc) in white
+    badger.text("Temperature", 110, 50, TEXT_SIZE)
+    badger.thickness(1)
+    badger.text(read_sensor_temp()+" C", 110, 65, TEXT_SIZE)
+    badger.thickness(2)
+    badger.text("Pressure", 110, 85, TEXT_SIZE)
+    badger.thickness(1)
+    badger.text(read_sensor_pressure()+" hPa", 110, 100, TEXT_SIZE)
+    badger.thickness(2)
+    # draw floor in black - values in white
+    badger.pen(0)
+    badger.rectangle(215, 39, 296, 71)
+    badger.pen(15)
+    badger.text("Floor", 237, 50, TEXT_SIZE)
+    badger.text("-", 238, 79, 1)
+    badger.pen(0)
+    # draw menu options values in black    
+    badger.text("Zero", 22, 120, TEXT_SIZE)
+    badger.text("Calc", 138, 120, TEXT_SIZE)
+    badger.text("Test", 240, 120, TEXT_SIZE)
+    badger.thickness(1)
+    badger.update()
+    badger.pen(15)
+    badger.clear()
+    # turn of activity LED to indicate function done
+    badger.led(0)
+
 def draw_elevation():
     badger.led(128)
     # Set display parameters
@@ -56,27 +124,62 @@ def draw_elevation():
     badger.rectangle(0, 0, 296, 22)
     badger.pen(15)
     badger.text("Hoe hoog zitten we?", 38, 10, TITLE_SIZE)
+    # draw framework
     badger.pen(0)
     badger.line(0, 39, 296, 39) # top horizontal line
     badger.line(0, 110, 296, 110) # bottom horizontal line
+    badger.line(98, 40, 98, 109)  # vertical center line 
     badger.line(215, 40, 215, 109)  # vertical floor line  
     badger.pen(0)
+    # for debugging use, print values to console
+    print("Sensor values")
     print(read_sensor_temp()+" C")
     print(read_sensor_pressure()+" hPa")
     print(read_sensor_altitude()+" m")
     print(calculate_floor())
-    badger.text("Temperature   "+read_sensor_temp()+" C", 8, 50, TEXT_SIZE)
-    badger.text("Pressure      "+read_sensor_pressure()+" hPa", 8, 70, TEXT_SIZE)
-    badger.text("Altitude        "+read_sensor_altitude()+" m", 8, 90, TEXT_SIZE)
+    print("-------------")
+    print("stored values")
+    print(str(temp_ground)+" C")
+    print(str(press_ground)+" hPa")
+    # draw values to the eINK display
+    badger.thickness(1)
+    badger.text("Groundlevel: ", 8, 29, 0.41)
+    badger.text(str(temp_ground)+" C", 90, 29, 0.41)
+    badger.text(str(press_ground)+" hPa", 150, 29, 0.41)
+    # draw altitude in black - values in white
+    badger.thickness(2)
+    badger.pen(0)
+    badger.rectangle(0, 39, 98, 71)
+    badger.pen(15)
+    badger.text("Altitude", 20, 50, TEXT_SIZE)
+    badger.text(read_sensor_altitude(), 10 , 79, 0.8)
+    badger.text("meter", 25, 100, TEXT_SIZE)
+    badger.pen(0)
+    #draw temperature-pressure (calc) in white
+    badger.text("Temperature", 110, 50, TEXT_SIZE)
+    badger.thickness(1)
+    badger.text(read_sensor_temp()+" C", 110, 65, TEXT_SIZE)
+    badger.thickness(2)
+    badger.text("Pressure", 110, 85, TEXT_SIZE)
+    badger.thickness(1)
+    badger.text(read_sensor_pressure()+" hPa", 110, 100, TEXT_SIZE)
+    badger.thickness(2)
+    # draw floor in black - values in white
+    badger.pen(0)
+    badger.rectangle(215, 39, 296, 71)
+    badger.pen(15)
     badger.text("Floor", 237, 50, TEXT_SIZE)
-    badger.text(calculate_floor(), 238, 85, 2)
+    badger.text(calculate_floor(), 238, 85, 1.2)
+    badger.pen(0)
+    # draw menu options values in black    
     badger.text("Zero", 22, 120, TEXT_SIZE)
     badger.text("Calc", 138, 120, TEXT_SIZE)
-    badger.text("The Hague", 215, 120, TEXT_SIZE)
+    badger.text("Test", 240, 120, TEXT_SIZE)
     badger.thickness(1)
     badger.update()
     badger.pen(15)
     badger.clear()
+    # turn of activity LED to indicate function done
     badger.led(0)
 
 # ------------------------------
@@ -84,22 +187,24 @@ def draw_elevation():
 # ------------------------------
 
 # Create a new Badger and set it to update NORMAL
-badger.led(128)
+#badger.led(128)
 badger.update_speed(badger2040.UPDATE_NORMAL)
 
 # ------------------------------
 #       Main program
 # ------------------------------
-read_sensor_temp()
-read_sensor_pressure()
+#read_sensor_temp()
+#read_sensor_pressure()
 
-draw_elevation()
+draw_init_screen()
 
 while True:
     if badger.pressed(badger2040.BUTTON_A): # reset groundlevel to this pressurelevel
         bme.sea_level_pressure = bme.pressure
         read_sensor_temp()
+        temp_ground = read_sensor_temp()
         read_sensor_pressure()
+        press_ground = read_sensor_pressure()
         draw_elevation()
 
     if badger.pressed(badger2040.BUTTON_B): # calculate floor based on pressure difference
@@ -107,7 +212,7 @@ while True:
         draw_elevation()
 
     if badger.pressed(badger2040.BUTTON_C): # set example height based on The Hague
-        bme.sea_level_pressure = 1025
+        bme.sea_level_pressure = 1031
         draw_elevation()
 
     if badger.pressed(badger2040.BUTTON_UP):
