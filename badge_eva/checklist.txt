@@ -1,4 +1,6 @@
-Broodtrommel
-Waterfles
+Brood
 Fruit
+Waterfles
 Flamingo
+Vestje
+Bandana
