@@ -21,5 +21,5 @@ def calculate_bar_length(total_bars, activity_time):
 
 bar_length, total_time = calculate_bar_length(total_bars,time_sec)
 
-print(bar_length, type(bar_length))
-print(round(total_time), type(total_time))
+print(bar_length, type(bar_length)) # type added for testing only
+print(round(total_time), type(total_time)) # type added for testing only
