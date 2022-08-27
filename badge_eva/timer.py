@@ -1,11 +1,12 @@
 # Badge Platform Eva - hardware platform v3.0
 # (2022) Voor m'n lieve guppie
 #
-# timer.py : v3.0-refactor 0.6 (alpha5 code release)
+# timer.py : v3.0-refactor 0.7 (alpha2 code release - gfx)
 
 import badger2040
 import badger_os
 import time
+import gfx
 
 # Default title and key/value file
 TIMER_TITLE = "Wat moet ik doen?"
@@ -187,7 +188,7 @@ def draw_timer_framework():
     display.text("Hoelang heb ik de tijd ?", 30, 10, TITLE_SIZE)
     display.pen(0)
     display.line(0, 39, 296, 39)
-    display.line(0, 101, 296, 101)
+    display.line(105, 85, 296, 85)
     display.pen(0)
     display.thickness(1)
     activity0, time0 = ACTIVITY_DURATION[state["selected_activity"]]
@@ -221,24 +222,44 @@ def draw_6bars():
     if draw_6bars_run_once:
         return
     display.update_speed(badger2040.UPDATE_FAST) # first draw is normal to get everything nice and sharp
-    display.pen(0)
-    display.thickness(6)
-    display.line(10, 92, 30, 92) # bar 1 - 20px long, 15px break
-    display.line(45, 92, 65, 92) # bar 2
-    display.line(80, 92, 100, 92) # bar 3
-    display.line(115, 92, 135, 92) # bar 4
-    display.line(150, 92, 170, 92) # bar 5
-    display.line(185, 92, 205, 92) # bar 6
-    display.thickness(2)
+    display.pen(0)    
+    display.thickness(2) # nice fat pie and lines
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(10, 65, 50, 45, 50, 85) # 6 fill
+    display.pen(15)
+    graphics.triangle(10, 65, 50, 45, 50, 85) # 6 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(10, 105, 10, 65, 50, 85) # 5 fill
+    display.pen(15)
+    graphics.triangle(10, 105, 10, 65, 50, 85) # 5 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(50, 125, 10, 105, 50, 85) # 4 fill
+    display.pen(15)
+    graphics.triangle(50, 125, 10, 105, 50, 85) # 4 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(90, 105, 50, 125, 50, 85) # 3 fill
+    display.pen(15)
+    graphics.triangle(90, 105, 50, 125, 50, 85) # 3 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(90, 65, 90, 105, 50, 85) # 2 fill
+    display.pen(15)
+    graphics.triangle(90, 65, 90, 105, 50, 85) # 2 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(50, 45, 90, 65, 50, 85) # 1 fill
+    display.pen(15)
+    graphics.triangle(50, 45, 90, 65, 50, 85) # 1 outline
     time0_m = int(updated_timer) / 60
     time0_m_r= str(round(time0_m))
     print("6bars_time0", time0)
     print("updated_timer", updated_timer)
     #print("6bars_time0_m_r", time0_m_r)
+    # rectangle background for clear visibility of number
     display.pen(15)
-    display.rectangle(226, 45, 700, 50)
+    display.rectangle(100, 60, 72, 48)
     display.pen(0)
-    display.text(str(updated_timer), 226, 70, TIME_TEXT_SIZE)
+    display.text(str(updated_timer), 100, 85, 1.9)
+    display.thickness(1)
+    display.text("mins over", 100, 115, 0.55)
     display.update()
     draw_6bars_run_once = True
 
@@ -247,25 +268,45 @@ def draw_5bars():
     global draw_5bars_run_once
     if draw_5bars_run_once:
         return
-    display.update_speed(badger2040.UPDATE_FAST) # screen update turbo for easy quick refresh
-    display.pen(0)
-    display.thickness(6)
-    display.line(10, 92, 30, 92) # bar 1 - 20px long, 15px break
-    display.line(45, 92, 65, 92) # bar 2
-    display.line(80, 92, 100, 92) # bar 3
-    display.line(115, 92, 135, 92) # bar 4
-    display.line(150, 92, 170, 92) # bar 5
-    display.pen(12)
-    display.line(185, 92, 205, 92) # bar 6
-    display.thickness(2)
+    display.update_speed(badger2040.UPDATE_FAST) # first draw is normal to get everything nice and sharp
+    display.pen(0)    
+    display.thickness(2) # nice fat pie and lines
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(10, 65, 50, 45, 50, 85) # 6 fill
+    display.pen(15)
+    graphics.triangle(10, 65, 50, 45, 50, 85) # 6 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(10, 105, 10, 65, 50, 85) # 5 fill
+    display.pen(15)
+    graphics.triangle(10, 105, 10, 65, 50, 85) # 5 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(50, 125, 10, 105, 50, 85) # 4 fill
+    display.pen(15)
+    graphics.triangle(50, 125, 10, 105, 50, 85) # 4 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(90, 105, 50, 125, 50, 85) # 3 fill
+    display.pen(15)
+    graphics.triangle(90, 105, 50, 125, 50, 85) # 3 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(90, 65, 90, 105, 50, 85) # 2 fill
+    display.pen(15)
+    graphics.triangle(90, 65, 90, 105, 50, 85) # 2 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(50, 45, 90, 65, 50, 85) # 1 fill
+    display.pen(15)
+    graphics.triangle(50, 45, 90, 65, 50, 85) # 1 outline
     time0_m = int(updated_timer) / 60
     time0_m_r= str(round(time0_m))
     print("5bars_time0", time0)
     print("updated_timer", updated_timer)
+    #print("5bars_time0_m_r", time0_m_r)
+    # rectangle background for clear visibility of number
     display.pen(15)
-    display.rectangle(226, 45, 700, 50)
+    display.rectangle(100, 60, 72, 48)
     display.pen(0)
-    display.text(str(updated_timer), 226, 70, TIME_TEXT_SIZE)
+    display.text(str(updated_timer), 100, 85, 1.9)
+    display.thickness(1)
+    display.text("mins over", 100, 115, 0.55)
     display.update()
     draw_5bars_run_once = True
 
@@ -274,25 +315,45 @@ def draw_4bars():
     global draw_4bars_run_once
     if draw_4bars_run_once:
         return
-    display.update_speed(badger2040.UPDATE_FAST)
-    display.pen(0)
-    display.thickness(6)
-    display.line(10, 92, 30, 92) # bar 1 - 20px long, 15px break
-    display.line(45, 92, 65, 92) # bar 2
-    display.line(80, 92, 100, 92) # bar 3
-    display.line(115, 92, 135, 92) # bar 4
-    display.pen(12)
-    display.line(150, 92, 170, 92) # bar 5
-    display.line(185, 92, 205, 92) # bar 6
-    display.thickness(2)
+    display.update_speed(badger2040.UPDATE_FAST) # first draw is normal to get everything nice and sharp
+    display.pen(0)    
+    display.thickness(2) # nice fat pie and lines
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(10, 65, 50, 45, 50, 85) # 6 fill
+    display.pen(15)
+    graphics.triangle(10, 65, 50, 45, 50, 85) # 6 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(10, 105, 10, 65, 50, 85) # 5 fill
+    display.pen(15)
+    graphics.triangle(10, 105, 10, 65, 50, 85) # 5 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(50, 125, 10, 105, 50, 85) # 4 fill
+    display.pen(15)
+    graphics.triangle(50, 125, 10, 105, 50, 85) # 4 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(90, 105, 50, 125, 50, 85) # 3 fill
+    display.pen(15)
+    graphics.triangle(90, 105, 50, 125, 50, 85) # 3 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(90, 65, 90, 105, 50, 85) # 2 fill
+    display.pen(15)
+    graphics.triangle(90, 65, 90, 105, 50, 85) # 2 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(50, 45, 90, 65, 50, 85) # 1 fill
+    display.pen(15)
+    graphics.triangle(50, 45, 90, 65, 50, 85) # 1 outline
     time0_m = int(updated_timer) / 60
     time0_m_r= str(round(time0_m))
     print("4bars_time0", time0)
     print("updated_timer", updated_timer)
+    #print("4bars_time0_m_r", time0_m_r)
+    # rectangle background for clear visibility of number
     display.pen(15)
-    display.rectangle(226, 45, 700, 50)
+    display.rectangle(100, 60, 72, 48)
     display.pen(0)
-    display.text(str(updated_timer), 226, 70, TIME_TEXT_SIZE)
+    display.text(str(updated_timer), 100, 85, 1.9)
+    display.thickness(1)
+    display.text("mins over", 100, 115, 0.55)
     display.update()
     draw_4bars_run_once = True
 
@@ -301,25 +362,45 @@ def draw_3bars():
     global draw_3bars_run_once
     if draw_3bars_run_once:
         return
-    display.update_speed(badger2040.UPDATE_FAST)
-    display.pen(0)
-    display.thickness(6)
-    display.line(10, 92, 30, 92) # bar 1 - 20px long, 15px break
-    display.line(45, 92, 65, 92) # bar 2
-    display.line(80, 92, 100, 92) # bar 3
-    display.pen(12)
-    display.line(115, 92, 135, 92) # bar 4
-    display.line(150, 92, 170, 92) # bar 5
-    display.line(185, 92, 205, 92) # bar 6
-    display.thickness(2)
+    display.update_speed(badger2040.UPDATE_FAST) # first draw is normal to get everything nice and sharp
+    display.pen(0)    
+    display.thickness(2) # nice fat pie and lines
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(10, 65, 50, 45, 50, 85) # 6 fill
+    display.pen(15)
+    graphics.triangle(10, 65, 50, 45, 50, 85) # 6 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(10, 105, 10, 65, 50, 85) # 5 fill
+    display.pen(15)
+    graphics.triangle(10, 105, 10, 65, 50, 85) # 5 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(50, 125, 10, 105, 50, 85) # 4 fill
+    display.pen(15)
+    graphics.triangle(50, 125, 10, 105, 50, 85) # 4 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(90, 105, 50, 125, 50, 85) # 3 fill
+    display.pen(15)
+    graphics.triangle(90, 105, 50, 125, 50, 85) # 3 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(90, 65, 90, 105, 50, 85) # 2 fill
+    display.pen(15)
+    graphics.triangle(90, 65, 90, 105, 50, 85) # 2 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(50, 45, 90, 65, 50, 85) # 1 fill
+    display.pen(15)
+    graphics.triangle(50, 45, 90, 65, 50, 85) # 1 outline
     time0_m = int(updated_timer) / 60
     time0_m_r= str(round(time0_m))
     print("3bars_time0", time0)
     print("updated_timer", updated_timer)
+    #print("3bars_time0_m_r", time0_m_r)
+    # rectangle background for clear visibility of number
     display.pen(15)
-    display.rectangle(226, 45, 700, 50)
+    display.rectangle(100, 60, 72, 48)
     display.pen(0)
-    display.text(str(updated_timer), 226, 70, TIME_TEXT_SIZE)
+    display.text(str(updated_timer), 100, 85, 1.9)
+    display.thickness(1)
+    display.text("mins over", 100, 115, 0.55)
     display.update()
     draw_3bars_run_once = True
 
@@ -328,25 +409,45 @@ def draw_2bars():
     global draw_2bars_run_once
     if draw_2bars_run_once:
         return
-    display.update_speed(badger2040.UPDATE_FAST)
-    display.pen(0)
-    display.thickness(6)
-    display.line(10, 92, 30, 92) # bar 1 - 20px long, 15px break
-    display.line(45, 92, 65, 92) # bar 2
-    display.pen(12)
-    display.line(80, 92, 100, 92) # bar 3
-    display.line(115, 92, 135, 92) # bar 4
-    display.line(150, 92, 170, 92) # bar 5
-    display.line(185, 92, 205, 92) # bar 6
-    display.thickness(2)
+    display.update_speed(badger2040.UPDATE_FAST) # first draw is normal to get everything nice and sharp
+    display.pen(0)    
+    display.thickness(2) # nice fat pie and lines
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(10, 65, 50, 45, 50, 85) # 6 fill
+    display.pen(15)
+    graphics.triangle(10, 65, 50, 45, 50, 85) # 6 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(10, 105, 10, 65, 50, 85) # 5 fill
+    display.pen(15)
+    graphics.triangle(10, 105, 10, 65, 50, 85) # 5 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(50, 125, 10, 105, 50, 85) # 4 fill
+    display.pen(15)
+    graphics.triangle(50, 125, 10, 105, 50, 85) # 4 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(90, 105, 50, 125, 50, 85) # 3 fill
+    display.pen(15)
+    graphics.triangle(90, 105, 50, 125, 50, 85) # 3 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(90, 65, 90, 105, 50, 85) # 2 fill
+    display.pen(15)
+    graphics.triangle(90, 65, 90, 105, 50, 85) # 2 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(50, 45, 90, 65, 50, 85) # 1 fill
+    display.pen(15)
+    graphics.triangle(50, 45, 90, 65, 50, 85) # 1 outline
     time0_m = int(updated_timer) / 60
     time0_m_r= str(round(time0_m))
     print("2bars_time0", time0)
     print("updated_timer", updated_timer)
+    #print("2bars_time0_m_r", time0_m_r)
+    # rectangle background for clear visibility of number
     display.pen(15)
-    display.rectangle(226, 45, 700, 50)
+    display.rectangle(100, 60, 72, 48)
     display.pen(0)
-    display.text(str(updated_timer), 226, 70, TIME_TEXT_SIZE)
+    display.text(str(updated_timer), 100, 85, 1.9)
+    display.thickness(1)
+    display.text("mins over", 100, 115, 0.55)
     display.update()
     draw_2bars_run_once = True
 
@@ -355,25 +456,46 @@ def draw_1bars():
     global draw_1bars_run_once
     if draw_1bars_run_once:
         return
-    display.update_speed(badger2040.UPDATE_FAST)
-    display.pen(0)
-    display.thickness(6)
-    display.line(10, 92, 30, 92) # bar 1 - 20px long, 15px break
-    display.pen(12)
-    display.line(45, 92, 65, 92) # bar 2
-    display.line(80, 92, 100, 92) # bar 3
-    display.line(115, 92, 135, 92) # bar 4
-    display.line(150, 92, 170, 92) # bar 5
-    display.line(185, 92, 205, 92) # bar 6
-    display.thickness(2)
+    display.update_speed(badger2040.UPDATE_FAST) # first draw is normal to get everything nice and sharp
+    display.pen(0)    
+    display.thickness(2) # nice fat pie and lines
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(10, 65, 50, 45, 50, 85) # 6 fill
+    display.pen(15)
+    graphics.triangle(10, 65, 50, 45, 50, 85) # 6 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(10, 105, 10, 65, 50, 85) # 5 fill
+    display.pen(15)
+    graphics.triangle(10, 105, 10, 65, 50, 85) # 5 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(50, 125, 10, 105, 50, 85) # 4 fill
+    display.pen(15)
+    graphics.triangle(50, 125, 10, 105, 50, 85) # 4 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(90, 105, 50, 125, 50, 85) # 3 fill
+    display.pen(15)
+    graphics.triangle(90, 105, 50, 125, 50, 85) # 3 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(90, 65, 90, 105, 50, 85) # 2 fill
+    display.pen(15)
+    graphics.triangle(90, 65, 90, 105, 50, 85) # 2 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(50, 45, 90, 65, 50, 85) # 1 fill
+    display.pen(15)
+    graphics.triangle(50, 45, 90, 65, 50, 85) # 1 outline
     time0_m = int(updated_timer) / 60
     time0_m_r= str(round(time0_m))
     print("1bars_time0", time0)
     print("updated_timer", updated_timer)
+    #print("1bars_time0_m_r", time0_m_r)
+    # rectangle background for clear visibility of number
     display.pen(15)
-    display.rectangle(226, 45, 700, 50)
+    display.rectangle(100, 60, 196, 68)
     display.pen(0)
-    display.text(str(updated_timer), 226, 70, TIME_TEXT_SIZE)
+    display.text("bijna tijd", 100, 65, 1.1)
+    display.text("opschieten", 100, 105, 1.1)
+    display.pen(15)
+    display.line(182, 85, 296, 85)
     display.update()
     draw_1bars_run_once = True
 
@@ -419,17 +541,10 @@ def countdown(time0):
         #display.update()
     print("stoppppp")
     display.update_speed(badger2040.UPDATE_FAST)
-    display.pen(15)
-    display.thickness(6)
-    display.line(10, 92, 30, 92) # bar 1 - 20px long, 15px break
-    display.line(45, 92, 65, 92) # bar 2
-    display.line(80, 92, 100, 92) # bar 3
-    display.line(115, 92, 135, 92) # bar 4
-    display.line(150, 92, 170, 92) # bar 5
-    display.line(185, 92, 205, 92) # bar 6
+
     # clear the minutes righthand side
     display.pen(15)
-    display.rectangle(230, 45, 700, 50)
+    display.rectangle(0, 45, 296, 83)
     display.pen(0)
     display.rectangle(100, 55, 112, 30)
     display.pen(15)
@@ -439,6 +554,7 @@ def countdown(time0):
 
 # Create a new Badger and set it to update FAST
 display = badger2040.Badger2040()
+graphics = gfx.GFX(296, 128, display.pixel)
 display.led(128)
 
 # Variable e-INK screen update speeds
@@ -485,4 +601,3 @@ while True:
         display.led(0)
 
     display.halt()
-
