@@ -1,7 +1,7 @@
 # Badge Platform Eva - hardware platform v3.0
 # (2022) Voor m'n lieve guppie
 #
-# timer.py : v3.0-refactor 0.6 (alpha2 code release)
+# timer.py : v3.0-refactor 0.6 (alpha3 code release)
 
 import badger2040
 import badger_os
@@ -50,7 +50,7 @@ HEIGHT = badger2040.HEIGHT # 128
 MENU_TEXT_SIZE = 0.5
 MENU_SPACING = 16
 MENU_WIDTH = 84
-MENU_PADDING = 220  # number of pixels between lefthandside and menu
+MENU_PADDING = 220  # Number of pixels between lefthandside and menu
 
 TEXT_INDENT = MENU_WIDTH + 10
 
@@ -83,11 +83,14 @@ pootjes wassen
 pyama
 420"""
 
+# Enable state for last activity selected
 state = {"selected_activity": 0}
 badger_os.state_load("timerstate", state)
 
+# Number of bar positions
 total_bars = 6
 
+# State of draw_bars functions to enable the "run once"
 draw_6bars_run_once = False
 draw_5bars_run_once = False
 draw_4bars_run_once = False
@@ -102,27 +105,10 @@ save_checklist = False
 activity_iter = iter(activity_list_items)
 activity_select = 0
 
-# temporary activity as placeholder for menu function
+# Temporary activity as placeholder for menu function
 activity0 = 0
 time0 = 0
-
-# Draw a upward arrow
-def draw_up(x, y, width, height, thickness, padding):
-    border = (thickness // 4) + padding
-    display.line(x + border, y + height - border,
-                 x + (width // 2), y + border)
-    display.line(x + (width // 2), y + border,
-                 x + width - border, y + height - border)
-
-
-# Draw a downward arrow
-def draw_down(x, y, width, height, thickness, padding):
-    border = (thickness // 2) + padding
-    display.line(x + border, y + border,
-                 x + (width // 2), y + height - border)
-    display.line(x + (width // 2), y + height - border,
-                 x + width - border, y + border)
-
+update_time0 = 0
 
 # Draw the title frame for the menu options
 def draw_frame():
@@ -179,12 +165,13 @@ def truncatestring(text, text_size, width):
             text += ""
             return text
 
+# Convert time in timer.txt from seconds to minutes as string
 def calculate_activity_time():
     time1_m = int(time1) / 60
     time1_m_r= str(round(time1_m))
     return activity_time
 
-# draw the timer framework
+# Draw the timer framework
 def draw_timer_framework():
     display.led(128)
     display.pen(15)
@@ -207,11 +194,11 @@ def draw_timer_framework():
     display.text(activity0, 5, 28, ACTIVITY_TEXT_SIZE)
     time0_m = int(time0) / 60
     time0_m_r= str(round(time0_m))
-    display.text(time0_m_r +" mins", 220, 28, ACTIVITY_TEXT_SIZE)
-    
+    display.text(time0_m_r +" mins", 220, 28, ACTIVITY_TEXT_SIZE)   
     display.thickness(2)
     display.update()
 
+# Calculate the duration each bar needs to represent
 def calculate_bar_length(total_bars, activity_time):
     bar_duration = activity_time / total_bars
     d0 = [(i * bar_duration, (i + 1) * bar_duration) for i in range(total_bars)]
@@ -228,11 +215,12 @@ def calculate_bar_length(total_bars, activity_time):
     #print("rounded d3 to two digits (d5): ", d5) #keep this as function output only
     return d5, d4
 
+# Draw 6 full bars and display the total time remaining (needs LED blink function to call)
 def draw_6bars():
     global draw_6bars_run_once
     if draw_6bars_run_once:
         return
-    display.update_speed(badger2040.UPDATE_TURBO)
+    display.update_speed(badger2040.UPDATE_FAST) # first draw is normal to get everything nice and sharp
     display.pen(0)
     display.thickness(6)
     display.line(10, 92, 30, 92) # bar 1 - 20px long, 15px break
@@ -242,15 +230,19 @@ def draw_6bars():
     display.line(150, 92, 170, 92) # bar 5
     display.line(185, 92, 205, 92) # bar 6
     display.thickness(2)
+    time0_m = int(time0) / 60
+    time0_m_r= str(round(time0_m))
+    print("time0-6bars", update_time0)
     display.text(time0_m_r, 240, 70, TIME_TEXT_SIZE)
     display.update()
     draw_6bars_run_once = True
 
+# Draw 5 full bars, 1 'empty' bar, specific activity placeholder and display the total time remaining
 def draw_5bars():
     global draw_5bars_run_once
     if draw_5bars_run_once:
         return
-    display.update_speed(badger2040.UPDATE_TURBO)
+    display.update_speed(badger2040.UPDATE_TURBO) # screen update turbo for easy quick refresh
     display.pen(0)
     display.thickness(6)
     display.line(10, 92, 30, 92) # bar 1 - 20px long, 15px break
@@ -258,13 +250,17 @@ def draw_5bars():
     display.line(80, 92, 100, 92) # bar 3
     display.line(115, 92, 135, 92) # bar 4
     display.line(150, 92, 170, 92) # bar 5
-    display.pen(8)
+    display.pen(12)
     display.line(185, 92, 205, 92) # bar 6
-    draw_5bars_run_once = True
     display.thickness(2)
+    time0_m = int(time0) / 60
+    time0_m_r= str(round(time0_m))
+    print("time0-5bars", update_time0)
     display.text(time0_m_r, 240, 70, TIME_TEXT_SIZE)
     display.update()
+    draw_5bars_run_once = True
 
+# Draw 4 full bars, 2 'empty' bars, specific activity placeholder and display the total time remaining
 def draw_4bars():
     global draw_4bars_run_once
     if draw_4bars_run_once:
@@ -276,14 +272,18 @@ def draw_4bars():
     display.line(45, 92, 65, 92) # bar 2
     display.line(80, 92, 100, 92) # bar 3
     display.line(115, 92, 135, 92) # bar 4
-    display.pen(8)
+    display.pen(12)
     display.line(150, 92, 170, 92) # bar 5
     display.line(185, 92, 205, 92) # bar 6
-    draw_4bars_run_once = True
     display.thickness(2)
+    time0_m = int(time0) / 60
+    time0_m_r= str(round(time0_m))
+    print("time0-4bars", update_time0)
     display.text(time0_m_r, 240, 70, TIME_TEXT_SIZE)
     display.update()
+    draw_4bars_run_once = True
 
+# Draw 3 full bars, 3 'empty' bars, specific activity placeholder and display the total time remaining
 def draw_3bars():
     global draw_3bars_run_once
     if draw_3bars_run_once:
@@ -294,15 +294,19 @@ def draw_3bars():
     display.line(10, 92, 30, 92) # bar 1 - 20px long, 15px break
     display.line(45, 92, 65, 92) # bar 2
     display.line(80, 92, 100, 92) # bar 3
-    display.pen(8)
+    display.pen(12)
     display.line(115, 92, 135, 92) # bar 4
     display.line(150, 92, 170, 92) # bar 5
     display.line(185, 92, 205, 92) # bar 6
-    draw_3bars_run_once = True
     display.thickness(2)
+    time0_m = int(time0) / 60
+    time0_m_r= str(round(time0_m))
+    print("time0-3bars", update_time0)
     display.text(time0_m_r, 240, 70, TIME_TEXT_SIZE)
     display.update()
+    draw_3bars_run_once = True
 
+# Draw 2 full bars, 4 'empty' bars, specific activity placeholder and display the total time remaining
 def draw_2bars():
     global draw_2bars_run_once
     if draw_2bars_run_once:
@@ -312,16 +316,20 @@ def draw_2bars():
     display.thickness(6)
     display.line(10, 92, 30, 92) # bar 1 - 20px long, 15px break
     display.line(45, 92, 65, 92) # bar 2
-    display.pen(8)
+    display.pen(12)
     display.line(80, 92, 100, 92) # bar 3
     display.line(115, 92, 135, 92) # bar 4
     display.line(150, 92, 170, 92) # bar 5
     display.line(185, 92, 205, 92) # bar 6
-    draw_2bars_run_once = True
     display.thickness(2)
+    time0_m = int(time0) / 60
+    time0_m_r= str(round(time0_m))
+    print("time0-2bars", update_time0)
     display.text(time0_m_r, 240, 70, TIME_TEXT_SIZE)
     display.update()
+    draw_2bars_run_once = True
 
+# Draw 1 full bar, 5 'empty' bars, specific activity placeholder and display the total time remaining
 def draw_1bars():
     global draw_1bars_run_once
     if draw_1bars_run_once:
@@ -330,18 +338,21 @@ def draw_1bars():
     display.pen(0)
     display.thickness(6)
     display.line(10, 92, 30, 92) # bar 1 - 20px long, 15px break
-    display.pen(8)
+    display.pen(12)
     display.line(45, 92, 65, 92) # bar 2
     display.line(80, 92, 100, 92) # bar 3
     display.line(115, 92, 135, 92) # bar 4
     display.line(150, 92, 170, 92) # bar 5
     display.line(185, 92, 205, 92) # bar 6
-    draw_1bars_run_once = True
     display.thickness(2)
+    time0_m = int(time0) / 60
+    time0_m_r= str(round(time0_m))
+    print("time0-1bars", update_time0)
     display.text(time0_m_r, 240, 70, TIME_TEXT_SIZE)
     display.update()
+    draw_1bars_run_once = True
 
-
+# The meat of the timer :-)
 def countdown(time0):
     #display.update_speed(badger2040.UPDATE_TURBO)
     while time0:
@@ -351,16 +362,28 @@ def countdown(time0):
         print("bar_length", bar_length)
         print("time0", time0)
         if time0 > bar_length * 5:
+            update_time0 = time0
+            print("update_time0", update_time0)
             draw_6bars()
         if time0 > bar_length * 4 and time0 < bar_length * 5:
+            update_time0 = time0
+            print("update_time0", update_time0)
             draw_5bars()
         if time0 > bar_length * 3 and time0 < bar_length * 4:
+            update_time0 = time0
+            print("update_time0", update_time0)
             draw_4bars()
         if time0 > bar_length * 2 and time0 < bar_length * 3:
+            update_time0 = time0
+            print("update_time0", update_time0)
             draw_3bars()
         if time0 > bar_length * 1 and time0 < bar_length * 2:
+            update_time0 = time0
+            print("update_time0", update_time0)
             draw_2bars()
         if time0  < bar_length * 1:
+            update_time0 = time0
+            print("update_time0", update_time0)
             draw_1bars()
         display.led(128)
         time.sleep(1)
@@ -373,7 +396,9 @@ def countdown(time0):
         #display.text(timeformat, 100, 60, TIME_TEXT_SIZE)
         #display.update()
     print("stoppppp")
-    display.pen(8)
+    display.update_speed(badger2040.UPDATE_FAST)
+    display.pen(15)
+    display.thickness(6)
     display.line(10, 92, 30, 92) # bar 1 - 20px long, 15px break
     display.line(45, 92, 65, 92) # bar 2
     display.line(80, 92, 100, 92) # bar 3
@@ -381,19 +406,18 @@ def countdown(time0):
     display.line(150, 92, 170, 92) # bar 5
     display.line(185, 92, 205, 92) # bar 6
     display.pen(0)
-    display.rectangle(100, 45, 100, 30)
+    display.rectangle(100, 55, 112, 30)
     display.pen(15)
-    display.text("KLAAR", 100, 60, TIME_TEXT_SIZE)
+    display.thickness(2)
+    display.text("KLAAR", 100, 70, 1.2)
     display.update()
-
 
 # Create a new Badger and set it to update FAST
 display = badger2040.Badger2040()
 display.led(128)
 
+# Variable e-INK screen update speeds
 changed = not badger2040.woken_by_button()
-
-
 
 if changed:
     display.update_speed(badger2040.UPDATE_FAST)
