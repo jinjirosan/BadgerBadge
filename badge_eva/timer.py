@@ -196,6 +196,11 @@ def draw_timer_framework():
     time0_m = int(time0) / 60
     time0_m_r= str(round(time0_m))
     display.text(time0_m_r +" mins totaal", 165, 28, ACTIVITY_TEXT_SIZE)   
+    display.font("bitmap8")
+    display.pen(0)
+    display.thickness(1)
+    display.text(str(round(bar_length) )+" s", 5, 120, MENU_TEXT_SIZE)
+    display.font("sans")
     display.thickness(2)
     display.update()
 
