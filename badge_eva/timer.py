@@ -188,7 +188,7 @@ def draw_timer_framework():
     display.text("Hoelang heb ik de tijd ?", 30, 10, TITLE_SIZE)
     display.pen(0)
     display.line(0, 39, 296, 39)
-    display.line(105, 85, 296, 85)
+    display.line(182, 85, 296, 85)
     display.pen(0)
     display.thickness(1)
     activity0, time0 = ACTIVITY_DURATION[state["selected_activity"]]
