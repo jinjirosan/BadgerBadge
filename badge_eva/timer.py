@@ -1,7 +1,7 @@
 # Badge Platform Eva - hardware platform v3.0
 # (2022) Voor m'n lieve guppie
 #
-# timer.py : v3.0-refactor 0.6 (alpha4 code release)
+# timer.py : v3.0-refactor 0.6 (alpha3 code release)
 
 import badger2040
 import badger_os
@@ -108,6 +108,7 @@ activity_select = 0
 # Temporary activity as placeholder for menu function
 activity0 = 0
 time0 = 0
+update_time0 = 0
 
 # Draw the title frame for the menu options
 def draw_frame():
@@ -231,9 +232,8 @@ def draw_6bars():
     display.thickness(2)
     time0_m = int(time0) / 60
     time0_m_r= str(round(time0_m))
-    print("6bars_time0", time0)
-    #print("6bars_time0_m_r", time0_m_r)
-    display.text(time0_m_r, 230, 70, TIME_TEXT_SIZE)
+    print("time0-6bars", update_time0)
+    display.text(time0_m_r, 240, 70, TIME_TEXT_SIZE)
     display.update()
     draw_6bars_run_once = True
 
@@ -255,8 +255,8 @@ def draw_5bars():
     display.thickness(2)
     time0_m = int(time0) / 60
     time0_m_r= str(round(time0_m))
-    print("5bars_time0", time0)
-    display.text(time0_m_r, 230, 70, TIME_TEXT_SIZE)
+    print("time0-5bars", update_time0)
+    display.text(time0_m_r, 240, 70, TIME_TEXT_SIZE)
     display.update()
     draw_5bars_run_once = True
 
@@ -278,9 +278,8 @@ def draw_4bars():
     display.thickness(2)
     time0_m = int(time0) / 60
     time0_m_r= str(round(time0_m))
-    print("4bars_time0", time0)
-    #print("4bars_time0_m_r", time0_m_r)
-    display.text(time0_m_r, 230, 70, TIME_TEXT_SIZE)
+    print("time0-4bars", update_time0)
+    display.text(time0_m_r, 240, 70, TIME_TEXT_SIZE)
     display.update()
     draw_4bars_run_once = True
 
@@ -302,9 +301,8 @@ def draw_3bars():
     display.thickness(2)
     time0_m = int(time0) / 60
     time0_m_r= str(round(time0_m))
-    print("3bars_time0", time0)
-    #print("3bars_time0_m_r", time0_m_r)
-    display.text(time0_m_r, 230, 70, TIME_TEXT_SIZE)
+    print("time0-3bars", update_time0)
+    display.text(time0_m_r, 240, 70, TIME_TEXT_SIZE)
     display.update()
     draw_3bars_run_once = True
 
@@ -326,9 +324,8 @@ def draw_2bars():
     display.thickness(2)
     time0_m = int(time0) / 60
     time0_m_r= str(round(time0_m))
-    print("2bars_time0", time0)
-    #print("2bars_time0_m_r", time0_m_r)
-    display.text(time0_m_r, 230, 70, TIME_TEXT_SIZE)
+    print("time0-2bars", update_time0)
+    display.text(time0_m_r, 240, 70, TIME_TEXT_SIZE)
     display.update()
     draw_2bars_run_once = True
 
@@ -350,38 +347,48 @@ def draw_1bars():
     display.thickness(2)
     time0_m = int(time0) / 60
     time0_m_r= str(round(time0_m))
-    print("1bars_time0", time0)
-    #print("1bars_time0_m_r", time0_m_r)
-    display.text(time0_m_r, 230, 70, TIME_TEXT_SIZE)
+    print("time0-1bars", update_time0)
+    display.text(time0_m_r, 240, 70, TIME_TEXT_SIZE)
     display.update()
     draw_1bars_run_once = True
 
 # The meat of the timer :-)
 def countdown(time0):
+    #display.update_speed(badger2040.UPDATE_TURBO)
     while time0:
         mins, secs = divmod(time0, 60)
         timeformat = '{:02d}:{:02d}'.format(mins,secs)
         print(timeformat, end='\r')
         print("bar_length", bar_length)
         print("time0", time0)
-        display.led(255)
         if time0 > bar_length * 5:
+            update_time0 = time0
+            print("update_time0", update_time0)
             draw_6bars()
         if time0 > bar_length * 4 and time0 < bar_length * 5:
+            update_time0 = time0
+            print("update_time0", update_time0)
             draw_5bars()
         if time0 > bar_length * 3 and time0 < bar_length * 4:
+            update_time0 = time0
+            print("update_time0", update_time0)
             draw_4bars()
         if time0 > bar_length * 2 and time0 < bar_length * 3:
+            update_time0 = time0
+            print("update_time0", update_time0)
             draw_3bars()
         if time0 > bar_length * 1 and time0 < bar_length * 2:
+            update_time0 = time0
+            print("update_time0", update_time0)
             draw_2bars()
         if time0  < bar_length * 1:
-            draw_1bars()        
-        time.sleep(0.5) # Split the 1 sec countdown into 2* 0.5 secs to enable LED blink
-        display.led(0)
-        time.sleep(0.5)
+            update_time0 = time0
+            print("update_time0", update_time0)
+            draw_1bars()
+        display.led(128)
+        time.sleep(1)
         time0 -= 1
-        #display.led(0) # get to this when countdown function is finished
+        display.led(0)
         #display.pen(15)
         #display.rectangle(100, 45, 100, 30)
         #display.pen(0)
