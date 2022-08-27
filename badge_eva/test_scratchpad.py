@@ -15,9 +15,11 @@ graphics = gfx.GFX(296, 128, display.pixel)
 
 ACTIVITY_TEXT_SIZE = 0.57
 TITLE_SIZE = 0.56
+MENU_TEXT_SIZE = 0.5
 
 activity0 = "schoenen"
 time0 = 300
+bar_length = 2.67
 
 # Draw the timer framework
 def draw_timer_framework():
@@ -99,4 +101,10 @@ display.text("bijna tijd", 100, 65, 1.1)
 display.text("opschieten", 100, 105, 1.1)
 display.pen(15)
 display.line(182, 85, 296, 85)
+
+display.font("bitmap8")
+display.pen(0)
+display.thickness(1)
+display.text(str(bar_length), 5, 120, MENU_TEXT_SIZE)
+
 display.update()
