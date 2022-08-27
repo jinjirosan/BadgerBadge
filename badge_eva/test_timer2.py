@@ -1,11 +1,12 @@
 # Badge Platform Eva - hardware platform v3.0
 # (2022) Voor m'n lieve guppie
 #
-# timer.py : v3.0-refactor 0.6 (alpha2 code release)
+# timer.py : v3.0-refactor 0.7 (alpha1 code release - gfx)
 
 import badger2040
 import badger_os
 import time
+import gfx
 
 # Default title and key/value file
 TIMER_TITLE = "Wat moet ik doen?"
@@ -50,7 +51,7 @@ HEIGHT = badger2040.HEIGHT # 128
 MENU_TEXT_SIZE = 0.5
 MENU_SPACING = 16
 MENU_WIDTH = 84
-MENU_PADDING = 220  # number of pixels between lefthandside and menu
+MENU_PADDING = 220  # Number of pixels between lefthandside and menu
 
 TEXT_INDENT = MENU_WIDTH + 10
 
@@ -64,7 +65,7 @@ TITLE_SIZE = 0.56
 ACTIVITY_HEIGHT = 30
 TIME_HEIGHT = 20
 ACTIVITY_TEXT_SIZE = 0.57
-TIME_TEXT_SIZE = 1.0
+TIME_TEXT_SIZE = 1.8
 LEFT_PADDING = 5
 NAME_PADDING = 20
 DETAIL_SPACING = 10
@@ -83,11 +84,14 @@ pootjes wassen
 pyama
 420"""
 
+# Enable state for last activity selected
 state = {"selected_activity": 0}
 badger_os.state_load("timerstate", state)
 
+# Number of bar positions
 total_bars = 6
 
+# State of draw_bars functions to enable the "run once"
 draw_6bars_run_once = False
 draw_5bars_run_once = False
 draw_4bars_run_once = False
@@ -102,27 +106,10 @@ save_checklist = False
 activity_iter = iter(activity_list_items)
 activity_select = 0
 
-# temporary activity as placeholder for menu function
+# Temporary activity as placeholder for menu function
 activity0 = 0
 time0 = 0
-
-# Draw a upward arrow
-def draw_up(x, y, width, height, thickness, padding):
-    border = (thickness // 4) + padding
-    display.line(x + border, y + height - border,
-                 x + (width // 2), y + border)
-    display.line(x + (width // 2), y + border,
-                 x + width - border, y + height - border)
-
-
-# Draw a downward arrow
-def draw_down(x, y, width, height, thickness, padding):
-    border = (thickness // 2) + padding
-    display.line(x + border, y + border,
-                 x + (width // 2), y + height - border)
-    display.line(x + (width // 2), y + height - border,
-                 x + width - border, y + border)
-
+updated_timer = 0
 
 # Draw the title frame for the menu options
 def draw_frame():
@@ -179,12 +166,13 @@ def truncatestring(text, text_size, width):
             text += ""
             return text
 
+# Convert time in timer.txt from seconds to minutes as string
 def calculate_activity_time():
     time1_m = int(time1) / 60
     time1_m_r= str(round(time1_m))
     return activity_time
 
-# draw the timer framework
+# Draw the timer framework
 def draw_timer_framework():
     display.led(128)
     display.pen(15)
@@ -200,18 +188,18 @@ def draw_timer_framework():
     display.text("Hoelang heb ik de tijd ?", 30, 10, TITLE_SIZE)
     display.pen(0)
     display.line(0, 39, 296, 39)
-    display.line(0, 101, 296, 101)
+    display.line(105, 85, 296, 85)
     display.pen(0)
     display.thickness(1)
-    #activity0, time0 = ACTIVITY_DURATION[state["selected_activity"]]
-    #display.text(activity0, 5, 28, ACTIVITY_TEXT_SIZE)
-    #time0_m = int(time0) / 60
-    #time0_m_r= str(round(time0_m))
-    #display.text(time0_m_r +" mins", 220, 28, ACTIVITY_TEXT_SIZE)
-    #display.text(str(round(time1_m)), 180, 50, TIME_TEXT_SIZE)
+    activity0, time0 = ACTIVITY_DURATION[state["selected_activity"]]
+    display.text(activity0, 5, 28, ACTIVITY_TEXT_SIZE)
+    time0_m = int(time0) / 60
+    time0_m_r= str(round(time0_m))
+    display.text(time0_m_r +" mins totaal", 165, 28, ACTIVITY_TEXT_SIZE)   
     display.thickness(2)
     display.update()
 
+# Calculate the duration each bar needs to represent
 def calculate_bar_length(total_bars, activity_time):
     bar_duration = activity_time / total_bars
     d0 = [(i * bar_duration, (i + 1) * bar_duration) for i in range(total_bars)]
@@ -228,132 +216,323 @@ def calculate_bar_length(total_bars, activity_time):
     #print("rounded d3 to two digits (d5): ", d5) #keep this as function output only
     return d5, d4
 
+# Draw 6 full bars and display the total time remaining (needs LED blink function to call)
 def draw_6bars():
     global draw_6bars_run_once
     if draw_6bars_run_once:
         return
-    display.update_speed(badger2040.UPDATE_TURBO)
+    display.update_speed(badger2040.UPDATE_FAST) # first draw is normal to get everything nice and sharp
+    display.pen(0)    
+    display.thickness(2) # nice fat pie and lines
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(10, 65, 50, 45, 50, 85) # 6 fill
+    display.pen(15)
+    graphics.triangle(10, 65, 50, 45, 50, 85) # 6 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(10, 105, 10, 65, 50, 85) # 5 fill
+    display.pen(15)
+    graphics.triangle(10, 105, 10, 65, 50, 85) # 5 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(50, 125, 10, 105, 50, 85) # 4 fill
+    display.pen(15)
+    graphics.triangle(50, 125, 10, 105, 50, 85) # 4 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(90, 105, 50, 125, 50, 85) # 3 fill
+    display.pen(15)
+    graphics.triangle(90, 105, 50, 125, 50, 85) # 3 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(90, 65, 90, 105, 50, 85) # 2 fill
+    display.pen(15)
+    graphics.triangle(90, 65, 90, 105, 50, 85) # 2 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(50, 45, 90, 65, 50, 85) # 1 fill
+    display.pen(15)
+    graphics.triangle(50, 45, 90, 65, 50, 85) # 1 outline
+    time0_m = int(updated_timer) / 60
+    time0_m_r= str(round(time0_m))
+    print("6bars_time0", time0)
+    print("updated_timer", updated_timer)
+    #print("6bars_time0_m_r", time0_m_r)
+    # rectangle background for clear visibility of number
+    display.pen(15)
+    display.rectangle(100, 60, 72, 48)
     display.pen(0)
-    display.thickness(6)
-    display.line(10, 92, 30, 92) # bar 1 - 20px long, 15px break
-    display.line(45, 92, 65, 92) # bar 2
-    display.line(80, 92, 100, 92) # bar 3
-    display.line(115, 92, 135, 92) # bar 4
-    display.line(150, 92, 170, 92) # bar 5
-    display.line(185, 92, 205, 92) # bar 6
+    display.text(str(updated_timer), 100, 85, 1.9)
+    display.thickness(1)
+    display.text("mins over", 100, 115, 0.55)
     display.update()
     draw_6bars_run_once = True
 
+# Draw 5 full bars, 1 'empty' bar, specific activity placeholder and display the total time remaining
 def draw_5bars():
     global draw_5bars_run_once
     if draw_5bars_run_once:
         return
-    display.update_speed(badger2040.UPDATE_TURBO)
+    display.update_speed(badger2040.UPDATE_FAST) # first draw is normal to get everything nice and sharp
+    display.pen(0)    
+    display.thickness(2) # nice fat pie and lines
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(10, 65, 50, 45, 50, 85) # 6 fill
+    display.pen(15)
+    graphics.triangle(10, 65, 50, 45, 50, 85) # 6 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(10, 105, 10, 65, 50, 85) # 5 fill
+    display.pen(15)
+    graphics.triangle(10, 105, 10, 65, 50, 85) # 5 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(50, 125, 10, 105, 50, 85) # 4 fill
+    display.pen(15)
+    graphics.triangle(50, 125, 10, 105, 50, 85) # 4 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(90, 105, 50, 125, 50, 85) # 3 fill
+    display.pen(15)
+    graphics.triangle(90, 105, 50, 125, 50, 85) # 3 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(90, 65, 90, 105, 50, 85) # 2 fill
+    display.pen(15)
+    graphics.triangle(90, 65, 90, 105, 50, 85) # 2 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(50, 45, 90, 65, 50, 85) # 1 fill
+    display.pen(15)
+    graphics.triangle(50, 45, 90, 65, 50, 85) # 1 outline
+    time0_m = int(updated_timer) / 60
+    time0_m_r= str(round(time0_m))
+    print("5bars_time0", time0)
+    print("updated_timer", updated_timer)
+    #print("5bars_time0_m_r", time0_m_r)
+    # rectangle background for clear visibility of number
+    display.pen(15)
+    display.rectangle(100, 60, 72, 48)
     display.pen(0)
-    display.thickness(6)
-    display.line(10, 92, 30, 92) # bar 1 - 20px long, 15px break
-    display.line(45, 92, 65, 92) # bar 2
-    display.line(80, 92, 100, 92) # bar 3
-    display.line(115, 92, 135, 92) # bar 4
-    display.line(150, 92, 170, 92) # bar 5
-    display.pen(8)
-    display.line(185, 92, 205, 92) # bar 6
-    draw_5bars_run_once = True
+    display.text(str(updated_timer), 100, 85, 1.9)
+    display.thickness(1)
+    display.text("mins over", 100, 115, 0.55)
     display.update()
+    draw_5bars_run_once = True
 
+# Draw 4 full bars, 2 'empty' bars, specific activity placeholder and display the total time remaining
 def draw_4bars():
     global draw_4bars_run_once
     if draw_4bars_run_once:
         return
-    display.update_speed(badger2040.UPDATE_TURBO)
+    display.update_speed(badger2040.UPDATE_FAST) # first draw is normal to get everything nice and sharp
+    display.pen(0)    
+    display.thickness(2) # nice fat pie and lines
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(10, 65, 50, 45, 50, 85) # 6 fill
+    display.pen(15)
+    graphics.triangle(10, 65, 50, 45, 50, 85) # 6 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(10, 105, 10, 65, 50, 85) # 5 fill
+    display.pen(15)
+    graphics.triangle(10, 105, 10, 65, 50, 85) # 5 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(50, 125, 10, 105, 50, 85) # 4 fill
+    display.pen(15)
+    graphics.triangle(50, 125, 10, 105, 50, 85) # 4 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(90, 105, 50, 125, 50, 85) # 3 fill
+    display.pen(15)
+    graphics.triangle(90, 105, 50, 125, 50, 85) # 3 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(90, 65, 90, 105, 50, 85) # 2 fill
+    display.pen(15)
+    graphics.triangle(90, 65, 90, 105, 50, 85) # 2 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(50, 45, 90, 65, 50, 85) # 1 fill
+    display.pen(15)
+    graphics.triangle(50, 45, 90, 65, 50, 85) # 1 outline
+    time0_m = int(updated_timer) / 60
+    time0_m_r= str(round(time0_m))
+    print("4bars_time0", time0)
+    print("updated_timer", updated_timer)
+    #print("4bars_time0_m_r", time0_m_r)
+    # rectangle background for clear visibility of number
+    display.pen(15)
+    display.rectangle(100, 60, 72, 48)
     display.pen(0)
-    display.thickness(6)
-    display.line(10, 92, 30, 92) # bar 1 - 20px long, 15px break
-    display.line(45, 92, 65, 92) # bar 2
-    display.line(80, 92, 100, 92) # bar 3
-    display.line(115, 92, 135, 92) # bar 4
-    display.pen(8)
-    display.line(150, 92, 170, 92) # bar 5
-    display.line(185, 92, 205, 92) # bar 6
-    draw_4bars_run_once = True
+    display.text(str(updated_timer), 100, 85, 1.9)
+    display.thickness(1)
+    display.text("mins over", 100, 115, 0.55)
     display.update()
+    draw_4bars_run_once = True
 
+# Draw 3 full bars, 3 'empty' bars, specific activity placeholder and display the total time remaining
 def draw_3bars():
     global draw_3bars_run_once
     if draw_3bars_run_once:
         return
-    display.update_speed(badger2040.UPDATE_TURBO)
+    display.update_speed(badger2040.UPDATE_FAST) # first draw is normal to get everything nice and sharp
+    display.pen(0)    
+    display.thickness(2) # nice fat pie and lines
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(10, 65, 50, 45, 50, 85) # 6 fill
+    display.pen(15)
+    graphics.triangle(10, 65, 50, 45, 50, 85) # 6 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(10, 105, 10, 65, 50, 85) # 5 fill
+    display.pen(15)
+    graphics.triangle(10, 105, 10, 65, 50, 85) # 5 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(50, 125, 10, 105, 50, 85) # 4 fill
+    display.pen(15)
+    graphics.triangle(50, 125, 10, 105, 50, 85) # 4 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(90, 105, 50, 125, 50, 85) # 3 fill
+    display.pen(15)
+    graphics.triangle(90, 105, 50, 125, 50, 85) # 3 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(90, 65, 90, 105, 50, 85) # 2 fill
+    display.pen(15)
+    graphics.triangle(90, 65, 90, 105, 50, 85) # 2 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(50, 45, 90, 65, 50, 85) # 1 fill
+    display.pen(15)
+    graphics.triangle(50, 45, 90, 65, 50, 85) # 1 outline
+    time0_m = int(updated_timer) / 60
+    time0_m_r= str(round(time0_m))
+    print("3bars_time0", time0)
+    print("updated_timer", updated_timer)
+    #print("3bars_time0_m_r", time0_m_r)
+    # rectangle background for clear visibility of number
+    display.pen(15)
+    display.rectangle(100, 60, 72, 48)
     display.pen(0)
-    display.thickness(6)
-    display.line(10, 92, 30, 92) # bar 1 - 20px long, 15px break
-    display.line(45, 92, 65, 92) # bar 2
-    display.line(80, 92, 100, 92) # bar 3
-    display.pen(8)
-    display.line(115, 92, 135, 92) # bar 4
-    display.line(150, 92, 170, 92) # bar 5
-    display.line(185, 92, 205, 92) # bar 6
-    draw_3bars_run_once = True
+    display.text(str(updated_timer), 100, 85, 1.9)
+    display.thickness(1)
+    display.text("mins over", 100, 115, 0.55)
     display.update()
+    draw_3bars_run_once = True
 
+# Draw 2 full bars, 4 'empty' bars, specific activity placeholder and display the total time remaining
 def draw_2bars():
     global draw_2bars_run_once
     if draw_2bars_run_once:
         return
-    display.update_speed(badger2040.UPDATE_TURBO)
+    display.update_speed(badger2040.UPDATE_FAST) # first draw is normal to get everything nice and sharp
+    display.pen(0)    
+    display.thickness(2) # nice fat pie and lines
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(10, 65, 50, 45, 50, 85) # 6 fill
+    display.pen(15)
+    graphics.triangle(10, 65, 50, 45, 50, 85) # 6 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(10, 105, 10, 65, 50, 85) # 5 fill
+    display.pen(15)
+    graphics.triangle(10, 105, 10, 65, 50, 85) # 5 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(50, 125, 10, 105, 50, 85) # 4 fill
+    display.pen(15)
+    graphics.triangle(50, 125, 10, 105, 50, 85) # 4 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(90, 105, 50, 125, 50, 85) # 3 fill
+    display.pen(15)
+    graphics.triangle(90, 105, 50, 125, 50, 85) # 3 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(90, 65, 90, 105, 50, 85) # 2 fill
+    display.pen(15)
+    graphics.triangle(90, 65, 90, 105, 50, 85) # 2 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(50, 45, 90, 65, 50, 85) # 1 fill
+    display.pen(15)
+    graphics.triangle(50, 45, 90, 65, 50, 85) # 1 outline
+    time0_m = int(updated_timer) / 60
+    time0_m_r= str(round(time0_m))
+    print("2bars_time0", time0)
+    print("updated_timer", updated_timer)
+    #print("2bars_time0_m_r", time0_m_r)
+    # rectangle background for clear visibility of number
+    display.pen(15)
+    display.rectangle(100, 60, 72, 48)
     display.pen(0)
-    display.thickness(6)
-    display.line(10, 92, 30, 92) # bar 1 - 20px long, 15px break
-    display.line(45, 92, 65, 92) # bar 2
-    display.pen(8)
-    display.line(80, 92, 100, 92) # bar 3
-    display.line(115, 92, 135, 92) # bar 4
-    display.line(150, 92, 170, 92) # bar 5
-    display.line(185, 92, 205, 92) # bar 6
-    draw_2bars_run_once = True
+    display.text(str(updated_timer), 100, 85, 1.9)
+    display.thickness(1)
+    display.text("mins over", 100, 115, 0.55)
     display.update()
+    draw_2bars_run_once = True
 
+# Draw 1 full bar, 5 'empty' bars, specific activity placeholder and display the total time remaining
 def draw_1bars():
     global draw_1bars_run_once
     if draw_1bars_run_once:
         return
-    display.update_speed(badger2040.UPDATE_TURBO)
+    display.update_speed(badger2040.UPDATE_FAST) # first draw is normal to get everything nice and sharp
+    display.pen(0)    
+    display.thickness(2) # nice fat pie and lines
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(10, 65, 50, 45, 50, 85) # 6 fill
+    display.pen(15)
+    graphics.triangle(10, 65, 50, 45, 50, 85) # 6 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(10, 105, 10, 65, 50, 85) # 5 fill
+    display.pen(15)
+    graphics.triangle(10, 105, 10, 65, 50, 85) # 5 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(50, 125, 10, 105, 50, 85) # 4 fill
+    display.pen(15)
+    graphics.triangle(50, 125, 10, 105, 50, 85) # 4 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(90, 105, 50, 125, 50, 85) # 3 fill
+    display.pen(15)
+    graphics.triangle(90, 105, 50, 125, 50, 85) # 3 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(90, 65, 90, 105, 50, 85) # 2 fill
+    display.pen(15)
+    graphics.triangle(90, 65, 90, 105, 50, 85) # 2 outline
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    graphics.fill_triangle(50, 45, 90, 65, 50, 85) # 1 fill
+    display.pen(15)
+    graphics.triangle(50, 45, 90, 65, 50, 85) # 1 outline
+    time0_m = int(updated_timer) / 60
+    time0_m_r= str(round(time0_m))
+    print("1bars_time0", time0)
+    print("updated_timer", updated_timer)
+    #print("1bars_time0_m_r", time0_m_r)
+    # rectangle background for clear visibility of number
+    display.pen(15)
+    display.rectangle(100, 60, 196, 68)
     display.pen(0)
-    display.thickness(6)
-    display.line(10, 92, 30, 92) # bar 1 - 20px long, 15px break
-    display.pen(8)
-    display.line(45, 92, 65, 92) # bar 2
-    display.line(80, 92, 100, 92) # bar 3
-    display.line(115, 92, 135, 92) # bar 4
-    display.line(150, 92, 170, 92) # bar 5
-    display.line(185, 92, 205, 92) # bar 6
-    draw_1bars_run_once = True
+    display.text("bijna tijd", 100, 65, 1.1)
+    display.text("opschieten", 100, 105, 1.1)
+    display.pen(15)
+    display.line(182, 85, 296, 85)
     display.update()
+    draw_1bars_run_once = True
 
-
+# The meat of the timer :-)
 def countdown(time0):
-    #display.update_speed(badger2040.UPDATE_TURBO)
     while time0:
         mins, secs = divmod(time0, 60)
         timeformat = '{:02d}:{:02d}'.format(mins,secs)
         print(timeformat, end='\r')
-        print("bar_length", bar_length)
-        print("time0", time0)
+        #print("bar_length", bar_length)
+        #print("time0", time0)
+        display.led(255)
         if time0 > bar_length * 5:
+            global updated_timer
+            updated_timer = mins
             draw_6bars()
         if time0 > bar_length * 4 and time0 < bar_length * 5:
+            global updated_timer
+            updated_timer = mins
             draw_5bars()
         if time0 > bar_length * 3 and time0 < bar_length * 4:
+            updated_timer = mins
             draw_4bars()
         if time0 > bar_length * 2 and time0 < bar_length * 3:
+            updated_timer = mins
             draw_3bars()
         if time0 > bar_length * 1 and time0 < bar_length * 2:
+            updated_timer = mins
             draw_2bars()
         if time0  < bar_length * 1:
-            draw_1bars()
-        display.led(128)
-        time.sleep(1)
-        time0 -= 1
+            updated_timer = mins
+            draw_1bars()        
+        time.sleep(0.5) # Split the 1 sec countdown into 2* 0.5 secs to enable LED blink
         display.led(0)
+        time.sleep(0.5)
+        time0 -= 1
+        #display.led(0) # get to this when countdown function is finished
         #display.pen(15)
         #display.rectangle(100, 45, 100, 30)
         #display.pen(0)
@@ -361,27 +540,25 @@ def countdown(time0):
         #display.text(timeformat, 100, 60, TIME_TEXT_SIZE)
         #display.update()
     print("stoppppp")
-    display.pen(8)
-    display.line(10, 92, 30, 92) # bar 1 - 20px long, 15px break
-    display.line(45, 92, 65, 92) # bar 2
-    display.line(80, 92, 100, 92) # bar 3
-    display.line(115, 92, 135, 92) # bar 4
-    display.line(150, 92, 170, 92) # bar 5
-    display.line(185, 92, 205, 92) # bar 6
-    display.pen(0)
-    display.rectangle(100, 45, 100, 30)
-    display.pen(15)
-    display.text("KLAAR", 100, 60, TIME_TEXT_SIZE)
-    display.update()
+    display.update_speed(badger2040.UPDATE_FAST)
 
+    # clear the minutes righthand side
+    display.pen(15)
+    display.rectangle(0, 45, 296, 83)
+    display.pen(0)
+    display.rectangle(100, 55, 112, 30)
+    display.pen(15)
+    display.thickness(2)
+    display.text("KLAAR", 100, 70, 1.2)
+    display.update()
 
 # Create a new Badger and set it to update FAST
 display = badger2040.Badger2040()
+graphics = gfx.GFX(296, 128, display.pixel)
 display.led(128)
 
+# Variable e-INK screen update speeds
 changed = not badger2040.woken_by_button()
-
-
 
 if changed:
     display.update_speed(badger2040.UPDATE_FAST)
@@ -424,3 +601,5 @@ while True:
         display.led(0)
 
     display.halt()
+
+
