@@ -43,6 +43,9 @@ The SigFox module will be used to send periodic messages back on status. Added b
 ![timer](https://github.com/jinjirosan/BadgerBadge/blob/main/images/im_6.jpg)
 ###### --> image: The timer app showing the activity list
 
+![timer](https://github.com/jinjirosan/BadgerBadge/blob/main/images/im_9.jpg)
+###### --> image: The timer app showing the countdown
+
 ![temp](https://github.com/jinjirosan/BadgerBadge/blob/main/images/im_4.jpg)
 ###### --> image: the temperature app
 
