@@ -6,9 +6,9 @@ import time
 #from threading import Thread
 
 # Create a new Badger and set it to update FAST
-display = badger2040.Badger2040()
+#display = badger2040.Badger2040()
 #graphics = gfx.GFX(296, 128, display.pixel)
 
-badger = badger2040.Badger2040()
-badger.system_speed(badger2040.SYSTEM_FAST)
+#badger = badger2040.Badger2040()
+badger2040.system_speed(badger2040.SYSTEM_FAST)
 
