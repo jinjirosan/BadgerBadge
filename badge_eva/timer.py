@@ -1,7 +1,7 @@
 # Badge Platform Eva - hardware platform v3.0
 # (2022) Voor m'n lieve guppie
 #
-# timer.py : v3.0-refactor 0.7 (alpha3 code release - gfx)
+# timer.py : v3.0-refactor 0.8 (alpha3 code release - gfx)
 
 import badger2040
 import badger_os
@@ -506,7 +506,7 @@ def draw_1bars():
 
 # The meat of the timer :-)
 def countdown(time0):
-    #display.system_speed(badger2040.SYSTEM_NORMAL)
+    badger2040.system_speed(badger2040.SYSTEM_NORMAL)
     while time0:
         mins, secs = divmod(time0, 60)
         timeformat = '{:02d}:{:02d}'.format(mins,secs)
@@ -568,11 +568,14 @@ changed = not badger2040.woken_by_button()
 
 if changed:
     display.update_speed(badger2040.UPDATE_FAST)
+    badger2040.system_speed(badger2040.SYSTEM_TURBO)
 else:
     display.update_speed(badger2040.UPDATE_TURBO)
+    badger2040.system_speed(badger2040.SYSTEM_NORMAL)
 
 # system speed increased for activity menu. Slow down on countdown
 #display.system_speed(badger2040.SYSTEM_FAST)
+#badger2040.system_speed(badger2040.SYSTEM_FAST)
 
 # ------------------------------
 #       Main program loop
