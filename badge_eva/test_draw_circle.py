@@ -19,29 +19,29 @@ display.update_speed(badger2040.UPDATE_FAST) # first draw is normal to get every
 display.pen(0)    
 display.thickness(2) # nice fat pie and lines
 display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
-graphics.fill_triangle(210, 65, 250, 45, 250, 85) # 6 fill
+graphics.fill_triangle(246, 93, 266, 83, 266, 103) # 6 fill
 display.pen(15)
-graphics.triangle(210, 65, 250, 45, 250, 85) # 6 outline +200x
+graphics.triangle(246, 93, 266, 83, 266, 103) # 6 outline +200x
 display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
-graphics.fill_triangle(210, 105, 210, 65, 250, 85) # 5 fill +200x
+graphics.fill_triangle(246, 113, 246, 93, 266, 103) # 5 fill +200x
 display.pen(15)
-graphics.triangle(210, 105, 210, 65, 250, 85) # 5 outline +200x
+graphics.triangle(246, 113, 246, 93, 266, 103) # 5 outline +200x
 display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
-graphics.fill_triangle(250, 125, 210, 105, 250, 85) # 4 fill +200x
+graphics.fill_triangle(266, 123, 246, 113, 266, 103) # 4 fill +200x
 display.pen(15)
-graphics.triangle(250, 125, 210, 105, 250, 85) # 4 outline
+graphics.triangle(266, 123, 246, 113, 266, 103) # 4 outline
 display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
-graphics.fill_triangle(290, 105, 250, 125, 250, 85) # 3 fill +200x
+graphics.fill_triangle(286, 113, 266, 123, 266, 103) # 3 fill +200x
 display.pen(15)
-graphics.triangle(290, 105, 250, 125, 250, 85) # 3 outline +200x
+graphics.triangle(286, 113, 266, 123, 266, 103) # 3 outline +200x
 display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
-graphics.fill_triangle(290, 65, 290, 105, 250, 85) # 2 fill
+graphics.fill_triangle(286, 93, 286, 113, 266, 103) # 2 fill
 display.pen(15)
-graphics.triangle(290, 65, 290, 105, 250, 85) # 2 outline +200x
+graphics.triangle(286, 93, 286, 113, 266, 103) # 2 outline +200x
 display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
-graphics.fill_triangle(250, 45, 290, 65, 250, 85) # 1 fill +200x
+graphics.fill_triangle(266, 83, 286, 93, 266, 103) # 1 fill +200x
 display.pen(15)
-graphics.triangle(250, 45, 290, 65, 250, 85) # 1 outline +200x
+graphics.triangle(266, 83, 286, 93, 266, 103) # 1 outline +200x
 
 display.pen(0)
 display.thickness(2) # nice fat pie and lines
