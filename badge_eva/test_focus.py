@@ -57,19 +57,61 @@ def draw_focus_framework():
     display.pen(0)
     display.line(100, 39, 296, 39)
     display.line(182, 80, 296, 80)
+    # selected focus parameters
     display.pen(0)
     display.thickness(1)
+    display.font("bitmap8")
     #activity0, time0 = ACTIVITY_DURATION[state["selected_activity"]]
     #display.text(activity0, 5, 28, ACTIVITY_TEXT_SIZE)
     #time0_m = int(time0) / 60
     #time0_m_r= str(round(time0_m))
-    #display.text(time0_m_r +" mins totaal", 165, 28, ACTIVITY_TEXT_SIZE)   
+    #display.text(time0_m_r +" mins totaal", 165, 28, ACTIVITY_TEXT_SIZE)
+    
+    # duration indicator 60-30
+    display.pen(0)
+    graphics.fill_rect(100, 24, 13, 11)
+    graphics.rect(111, 24, 13, 11)
+    display.pen(15)
+    display.thickness(1)
     display.font("bitmap8")
+    display.text("60", 102, 26, 0.1)
+    display.pen(0)
+    display.text("30", 113, 26, 0.1)
+
+    # duration indicator 30-15
+    display.pen(0)
+    graphics.fill_rect(127, 24, 13, 11)
+    graphics.rect(138, 24, 13, 11)
+    display.pen(15)
+    display.thickness(1)
+    display.font("bitmap8")
+    display.text("30", 129, 26, 0.1)
+    display.pen(0)
+    display.text("15", 141, 26, 0.1)
+    
+    # duration indicator 10-5
+    display.pen(0)
+    graphics.fill_rect(154, 24, 13, 11)
+    graphics.rect(165, 24, 13, 11)
+    display.pen(15)
+    display.thickness(1)
+    display.font("bitmap8")
+    display.text("10", 157, 26, 0.1)
+    display.pen(0)
+    display.text("5", 170, 26, 0.1)
+    
+    # bar length indicator section
     display.pen(0)
     display.thickness(1)
+    display.font("bitmap8")
     display.text(str(round(bar_length) )+" s", 280, 120, MENU_TEXT_SIZE)
-    display.font("sans")
-    display.thickness(2)
+    # start button section
+    display.rectangle(137, 116, 38, 12) # start button rectangle
+    display.pen(15) # inverse pen to white
+    display.thickness(1) # ensure thinkness of pen is 1
+    display.font("bitmap8") # set font to bitmap for readability small size
+    display.text("start", 144, 118, 0.7) # start button text
+    display.font("sans") # return to default font, maybe change this to font selection at start of each function
     #display.update()
 
 
