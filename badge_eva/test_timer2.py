@@ -1,7 +1,7 @@
 # Badge Platform Eva - hardware platform v3.0
 # (2022) Voor m'n lieve guppie
 #
-# timer.py : v3.0-refactor 0.7 (alpha1 code release - gfx)
+# test_timer.py : v3.0-refactor 0.8 (alpha3 code release - gfx)
 
 import badger2040
 import badger_os
@@ -188,7 +188,7 @@ def draw_timer_framework():
     display.text("Hoelang heb ik de tijd ?", 30, 10, TITLE_SIZE)
     display.pen(0)
     display.line(0, 39, 296, 39)
-    display.line(105, 85, 296, 85)
+    display.line(182, 85, 296, 85)
     display.pen(0)
     display.thickness(1)
     activity0, time0 = ACTIVITY_DURATION[state["selected_activity"]]
@@ -196,6 +196,11 @@ def draw_timer_framework():
     time0_m = int(time0) / 60
     time0_m_r= str(round(time0_m))
     display.text(time0_m_r +" mins totaal", 165, 28, ACTIVITY_TEXT_SIZE)   
+    display.font("bitmap8")
+    display.pen(0)
+    display.thickness(1)
+    display.text(str(round(bar_length) )+" s", 5, 120, MENU_TEXT_SIZE)
+    display.font("sans")
     display.thickness(2)
     display.update()
 
@@ -501,6 +506,7 @@ def draw_1bars():
 
 # The meat of the timer :-)
 def countdown(time0):
+    badger2040.system_speed(badger2040.SYSTEM_NORMAL)
     while time0:
         mins, secs = divmod(time0, 60)
         timeformat = '{:02d}:{:02d}'.format(mins,secs)
@@ -562,8 +568,14 @@ changed = not badger2040.woken_by_button()
 
 if changed:
     display.update_speed(badger2040.UPDATE_FAST)
+    badger2040.system_speed(badger2040.SYSTEM_TURBO)
 else:
     display.update_speed(badger2040.UPDATE_TURBO)
+    badger2040.system_speed(badger2040.SYSTEM_NORMAL)
+
+# system speed increased for activity menu. Slow down on countdown
+#display.system_speed(badger2040.SYSTEM_FAST)
+#badger2040.system_speed(badger2040.SYSTEM_FAST)
 
 # ------------------------------
 #       Main program loop
@@ -601,5 +613,3 @@ while True:
         display.led(0)
 
     display.halt()
-
-
