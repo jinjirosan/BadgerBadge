@@ -1,7 +1,7 @@
 # Badge Platform Eva - hardware platform v3.0
 # (2022) Voor m'n lieve guppie
 #
-# focus.py : v3.0-refactor 0.1
+# focus.py : v3.0-refactor 0.2
 
 import badger2040
 import badger_os
@@ -51,12 +51,12 @@ def draw_focus_framework():
     display.thickness(2)
     # black box on top
     display.pen(0)
-    display.rectangle(100, 0, 296, 22)
+    display.rectangle(160, 0, 296, 22)
     display.pen(15)
-    display.text("Even tijd voor mezelf", 110, 10, TITLE_SIZE)
+    display.text("Focus stoplicht", 165, 10, TITLE_SIZE)
     display.pen(0)
-    display.line(100, 39, 296, 39)
-    display.line(182, 80, 296, 80)
+    display.line(160, 39, 296, 39) # top
+    display.line(182, 80, 296, 80) # bottom
     # selected focus parameters
     display.pen(0)
     display.thickness(1)
@@ -69,37 +69,45 @@ def draw_focus_framework():
     
     # duration indicator 60-30
     display.pen(0)
-    graphics.fill_rect(100, 24, 13, 11)
-    graphics.rect(111, 24, 13, 11)
+    graphics.fill_rect(160, 24, 13, 11) # alles +60px x
+    graphics.rect(171, 24, 13, 11)
     display.pen(15)
     display.thickness(1)
     display.font("bitmap8")
-    display.text("60", 102, 26, 0.1)
+    display.text("60", 162, 26, 0.1)
     display.pen(0)
-    display.text("30", 113, 26, 0.1)
+    display.text("30", 173, 26, 0.1)
 
     # duration indicator 30-15
     display.pen(0)
-    graphics.fill_rect(127, 24, 13, 11)
-    graphics.rect(138, 24, 13, 11)
+    graphics.fill_rect(187, 24, 13, 11)
+    graphics.rect(198, 24, 13, 11)
     display.pen(15)
     display.thickness(1)
     display.font("bitmap8")
-    display.text("30", 129, 26, 0.1)
+    display.text("30", 189, 26, 0.1)
     display.pen(0)
-    display.text("15", 141, 26, 0.1)
+    display.text("15", 201, 26, 0.1)
     
     # duration indicator 10-5
     display.pen(0)
-    graphics.fill_rect(154, 24, 13, 11)
-    graphics.rect(165, 24, 13, 11)
+    graphics.fill_rect(214, 24, 13, 11)
+    graphics.rect(225, 24, 13, 11)
     display.pen(15)
     display.thickness(1)
     display.font("bitmap8")
-    display.text("10", 157, 26, 0.1)
+    display.text("10", 217, 26, 0.1)
     display.pen(0)
-    display.text("5", 170, 26, 0.1)
-    
+    display.text("5", 230, 26, 0.1)
+
+    # duration indicator manual
+    display.pen(0)
+    graphics.rect(241, 24, 36, 11)
+    display.thickness(1)
+    display.font("bitmap8")
+    display.pen(0)
+    display.text("manual", 245, 26, 0.1)
+
     # bar length indicator section
     display.pen(0)
     display.thickness(1)
@@ -220,7 +228,7 @@ display.pen(0)
 display.text(str(updated_timer), 190, 102, 1)
 display.thickness(1)
 display.font("bitmap8")
-display.text("mins over", 190, 120, 0.55)
+display.text("mins nog", 192, 120, 0.55)
 
 
 display.update()
