@@ -1,7 +1,7 @@
 # Badge Platform Eva - hardware platform v3.0
 # (2022) Voor m'n lieve guppie
 #
-# focus.py : v3.0-refactor 0.2
+# focus.py : v3.0-refactor 0.3
 
 import badger2040
 import badger_os
@@ -95,6 +95,7 @@ updated_focus = 0
 bar_length = 0
 activity_duration = 0
 updated_timer = 16
+time0 = 0 # remove this one from functions
 
 display.update_speed(badger2040.UPDATE_FAST) # first draw is normal to get everything nice and sharp
 
@@ -180,7 +181,7 @@ def draw_focus_framework():
     display.font("sans") # return to default font, maybe change this to font selection at start of each function
     #display.update()
 
-# Draw the menu on the righthand side
+# Draw the menu
 def draw_focus_menu():
     display.font("bitmap8")
     display.thickness(1)
@@ -245,17 +246,79 @@ def draw_light_green():
     display.thickness(1)
     display.text("G", 40, 105, 0.7)
 
+# Calculate the duration each slice needs to represent
+def calculate_slice_length(total_slices, focus_time):
+    slice_duration = focus_time / total_slices
+    d0 = [(i * slice_duration, (i + 1) * slice_duration) for i in range(total_slices)]
+    #print("total bars (d0): ", d0) #debug
+    d1 = (d0[0])
+    #print("first bar size(d1): ", d0[0]) #debug
+    d2 = [item[0] for item in d0]
+    #print("get every second bar time (d2): ", d2) #debug
+    d3 = d2[1]
+    #print("bar duration unit (d3): ", d3) #debug
+    d4 = d3 * 6
+    #print("verification back to total time0 (d4): ", round(d4)) #debug
+    d5 = round(d3,2)
+    #print("rounded d3 to two digits (d5): ", d5) #keep this as function output only
+    return d5, d4
+
 
 # slices
 
-display.pen(0)
-
 def draw_6slices():
+    global draw_6slices_run_once
+    if draw_6slices_run_once:
+        return
     display.thickness(2) # nice fat pie and lines
     display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
     graphics.fill_triangle(246, 93, 266, 83, 266, 103) # 6 fill
     display.pen(15)
-    graphics.triangle(246, 93, 266, 83, 266, 103) # 6 outline +200x
+    graphics.triangle(246, 93, 266, 83, 266, 103) # 6 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    display.thickness(2) # nice fat pie and lines
+    graphics.fill_triangle(246, 113, 246, 93, 266, 103) # 5 fill
+    display.pen(15)
+    graphics.triangle(246, 113, 246, 93, 266, 103) # 5 outline
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    display.thickness(2) # nice fat pie and lines
+    graphics.fill_triangle(266, 123, 246, 113, 266, 103) # 4 fill
+    display.pen(15)
+    graphics.triangle(266, 123, 246, 113, 266, 103) # 4 outline 
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    display.thickness(2) # nice fat pie and lines
+    graphics.fill_triangle(286, 113, 266, 123, 266, 103) # 3 fill +200x
+    display.pen(15)
+    graphics.triangle(286, 113, 266, 123, 266, 103) # 3 outline +200x
+    display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
+    display.thickness(2) # nice fat pie and lines
+    graphics.fill_triangle(286, 93, 286, 113, 266, 103) # 2 fill
+    display.pen(15)
+    graphics.triangle(286, 93, 286, 113, 266, 103) # 2 outline +200x
+    display.pen(12) # use pen(12) for spent slice, pen(0) for full slice
+    display.thickness(2) # nice fat pie and lines
+    graphics.fill_triangle(266, 83, 286, 93, 266, 103) # 1 fill +200x
+    display.pen(15)
+    graphics.triangle(266, 83, 286, 93, 266, 103) # 1 outline +200x 
+    graphics.triangle(50, 45, 90, 65, 50, 85) # 1 outline
+
+    # rectangle background for clear visibility of number
+    #display.pen(15)
+    #display.rectangle(100, 60, 72, 48)
+    #display.pen(0)
+
+    time0_m = int(updated_timer) / 60
+    time0_m_r= str(round(time0_m))
+    print("6bars_time0", time0)
+    print("updated_timer", updated_timer)
+    # remaining time
+    display.pen(0)
+    display.text(str(updated_timer), 190, 102, 1)
+    display.thickness(1)
+    display.font("bitmap8")
+    display.text("mins nog", 192, 120, 0.55)
+    #display.update()   # enable when function while loop is active
+    draw_6bars_run_once = True
 
 def draw_5slices():
     display.pen(0) # use pen(12) for spent slice, pen(0) for full slice
@@ -303,18 +366,12 @@ draw_light_orange()
 draw_light_green()
 
 draw_6slices()
-draw_5slices()
-draw_4slices()
-draw_3slices()
-draw_2slices()
-draw_1slice()
+#draw_5slices()
+#draw_4slices()
+#draw_3slices()
+#draw_2slices()
+#draw_1slice()
 
-# remaining time
-display.pen(0)
-display.text(str(updated_timer), 190, 102, 1)
-display.thickness(1)
-display.font("bitmap8")
-display.text("mins nog", 192, 120, 0.55)
 
 
 display.update()
