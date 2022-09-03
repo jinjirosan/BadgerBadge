@@ -9,6 +9,37 @@ import time
 import math
 import gfx
 
+# Default title and key/value file
+FOCUS_TITLE = "Focus stoplicht"
+FOCUS_FILE = "focus.txt"
+
+# Open the focus file
+try:
+    badge = open("focus.txt", "r")
+except OSError:
+    with open("focus.txt", "w") as f:
+        f.write(DEFAULT_TEXT)
+        f.flush()
+    badge = open("focus.txt", "r")
+    
+# Read in the next 6 lines
+focus_setting1 = badge.readline()  # "Focus 60 mins"
+time1_red = badge.readline()       # "3600" : 60mins
+time1_orange = badge.readline()    # "1800" : 30mins
+focus_setting2 = badge.readline()  # "Focus 30 mins"
+time2_red = badge.readline()       # "1800" : 30mins
+time2_orange = badge.readline()    # "900" : 15mins
+focus_setting3 = badge.readline()  # "Focus 10 mins"
+time3_red = badge.readline()       # "600" : 10mins
+time3_orange = badge.readline()    # "300" : 5mins
+
+# Global variables
+FOCUS_DURATION = (
+    (focus_setting1, time1_red, time1_orange),
+    (focus_setting2, time2_red, time2_orange),
+    (focus_setting3, time3_red, time3_orange)
+)
+
 WIDTH = badger2040.WIDTH # 296
 HEIGHT = badger2040.HEIGHT # 128
 
@@ -21,14 +52,29 @@ ACTIVITY_TEXT_SIZE = 0.57
 TITLE_SIZE = 0.56
 MENU_TEXT_SIZE = 0.5
 
+DEFAULT_TEXT="""
+Focus 60 mins
+3600
+1800
+Focus 30 mins
+1800
+900
+Focus 10 mins
+600
+300"""
+
+# Enable state for last activity selected
+state = {"selected_focus": 0}
+badger_os.state_load("focusstate", state)
+
 activity0 = 0
 time0 = 0
 bar_length = 0
 activity_duration = 0
 updated_timer = 16
 
-#display.font("bitmap8")
-
+# Number of slice positions
+total_slices = 6
 
 # State of draw_slices functions to enable the "run once"
 draw_6slices_run_once = False
@@ -37,6 +83,18 @@ draw_4slices_run_once = False
 draw_3slices_run_once = False
 draw_2slices_run_once = False
 draw_1slice_run_once = False
+
+# List items taken from focus.txt 
+focus_list_items = [focus_setting1, focus_setting2, focus_setting3]
+focus_list_times = [time1_red, time1_orange, time2_red, time2_orange, time3_red, time3_orange]
+save_checklist = False
+focus_iter = iter(focus_list_items)
+focus_select = 0
+
+# Temporary activity as placeholder for menu function
+focus0 = 0
+time0 = 0
+updated_focus = 0
 
 display.update_speed(badger2040.UPDATE_FAST) # first draw is normal to get everything nice and sharp
 
@@ -53,7 +111,7 @@ def draw_focus_framework():
     display.pen(0)
     display.rectangle(160, 0, 296, 22)
     display.pen(15)
-    display.text("Focus stoplicht", 165, 10, TITLE_SIZE)
+    display.text(FOCUS_TITLE, 165, 10, TITLE_SIZE)
     display.pen(0)
     display.line(160, 39, 296, 39) # top
     display.line(182, 80, 296, 80) # bottom
@@ -69,7 +127,7 @@ def draw_focus_framework():
     
     # duration indicator 60-30
     display.pen(0)
-    graphics.fill_rect(160, 24, 13, 11) # alles +60px x
+    graphics.fill_rect(160, 24, 13, 11)
     graphics.rect(171, 24, 13, 11)
     display.pen(15)
     display.thickness(1)
