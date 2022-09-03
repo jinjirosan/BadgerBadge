@@ -67,11 +67,7 @@ Focus 10 mins
 state = {"selected_focus": 0}
 badger_os.state_load("focusstate", state)
 
-activity0 = 0
-time0 = 0
-bar_length = 0
-activity_duration = 0
-updated_timer = 16
+
 
 # Number of slice positions
 total_slices = 6
@@ -93,8 +89,12 @@ focus_select = 0
 
 # Temporary activity as placeholder for menu function
 focus0 = 0
-time0 = 0
+time0_red = 0
+time0_orange = 0
 updated_focus = 0
+bar_length = 0
+activity_duration = 0
+updated_timer = 16
 
 display.update_speed(badger2040.UPDATE_FAST) # first draw is normal to get everything nice and sharp
 
@@ -180,7 +180,35 @@ def draw_focus_framework():
     display.font("sans") # return to default font, maybe change this to font selection at start of each function
     #display.update()
 
+# Draw the menu on the righthand side
+def draw_focus_menu():
+    display.font("bitmap8")
+    display.thickness(1)
+    for i in range(len(FOCUS_DURATION)):
+        focus0, time0_red, time0_orange = FOCUS_DURATION[i]
+        display.pen(0)
+        if i == state["selected_activity"]:
+            display.rectangle((MENU_PADDING - 5), i * MENU_SPACING, MENU_WIDTH, MENU_SPACING)
+            display.pen(15)
 
+        display.text(focus0, MENU_PADDING, (i * MENU_SPACING) + int((MENU_SPACING - 8) / 2), MENU_TEXT_SIZE)
+        focus0, time0_red, time0_orange = ACTIVITY_DURATION[state["selected_activity"]]
+        time0_m = int(time0_red) / 60
+        time0_m_r= str(round(time0_m))
+        display.pen(15)
+        display.rectangle(75, 45, 75, 25)
+        display.pen(0)
+        display.thickness(1)
+        display.text(time0_m_r +" mins", 80, 50, 2)
+    focus0, time0_red, time0_orange = ACTIVITY_DURATION[state["selected_activity"]]
+    display.thickness(1)
+    display.update()
+
+# Convert time in timer.txt from seconds to minutes as string
+def calculate_focus_time():
+    time1_m = int(time1) / 60
+    time1_m_r= str(round(time1_m))
+    return focus_time
 
 
 def draw_light_red():
