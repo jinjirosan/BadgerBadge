@@ -1,7 +1,7 @@
 # Badge Platform Eva - hardware platform v3.0
 # (2022) Voor m'n lieve guppie
 #
-# focus.py : v3.0-refactor 0.4
+# focus.py : v3.0-refactor 0.5
 
 import badger2040
 import badger_os
@@ -117,6 +117,7 @@ display.update_speed(badger2040.UPDATE_FAST) # first draw is normal to get every
 
 # Draw the focus framework
 def draw_focus_framework():
+#     display.update_speed(badger2040.UPDATE_FAST)
     display.led(128)
     display.pen(15)
     display.clear()
@@ -136,7 +137,11 @@ def draw_focus_framework():
     display.pen(0)
     display.thickness(1)
     display.font("bitmap8")
-
+    
+    # Draw the trafficlight
+    draw_light_red()
+    draw_light_orange()
+    draw_light_green()
     #display.update()
 
 # Draw the menu
@@ -176,7 +181,7 @@ def draw_focus_menu():
     display.text("start", 249, 118, 0.7) # start button text +7px
     display.font("sans") # return to default font, maybe change this to font selection at start of each function
     display.thickness(1)
-    #display.update()  # enable later when all functions are defined
+    display.update()  # enable later when all functions are defined
 
 # Convert time in timer.txt from seconds to minutes as string
 def calculate_focus_time():
@@ -708,21 +713,19 @@ def countdown(time0):
     print("stoppppp")
     display.update_speed(badger2040.UPDATE_FAST)
 
-    # clear the minutes righthand side
-    display.pen(15)
-    display.rectangle(0, 45, 296, 83)
-    display.pen(0)
-    display.rectangle(100, 55, 112, 30)
-    display.pen(15)
-    display.thickness(2)
-    display.text("KLAAR", 100, 70, 1.2)
+    ## clear the minutes righthand side
+    #display.pen(15)
+    #display.rectangle(0, 45, 296, 83)
+    #display.pen(0)
+    #display.rectangle(100, 55, 112, 30)
+    #display.pen(15)
+    #display.thickness(2)
+    #display.text("KLAAR", 100, 70, 1.2)
     display.update()
 
 
-draw_focus_framework()
-draw_light_red()
-draw_light_orange()
-draw_light_green()
+#draw_focus_framework()
+
 
 #draw_6slices()
 #draw_5slices()
@@ -731,8 +734,63 @@ draw_light_green()
 #draw_2slices()
 #draw_1slice()
 
-draw_focus_menu()
+#draw_focus_menu()
 
-display.update()
-display.led(0)
+#display.update()
+#display.led(0)
 
+# Create a new Badger and set it to update FAST
+display = badger2040.Badger2040()
+graphics = gfx.GFX(296, 128, display.pixel)
+display.led(128)
+
+# Variable e-INK screen update speeds
+changed = not badger2040.woken_by_button()
+
+if changed:
+    display.update_speed(badger2040.UPDATE_TURBO)
+    badger2040.system_speed(badger2040.SYSTEM_TURBO)
+else:
+    display.update_speed(badger2040.UPDATE_FAST)
+    badger2040.system_speed(badger2040.SYSTEM_NORMAL)
+
+# system speed increased for activity menu. Slow down on countdown
+#display.system_speed(badger2040.SYSTEM_FAST)
+#badger2040.system_speed(badger2040.SYSTEM_FAST)
+
+# ------------------------------
+#       Main program loop
+# ------------------------------
+
+while True:
+    if display.pressed(badger2040.BUTTON_UP):
+        state["selected_focus"] -= 1
+        if state["selected_focus"] < 0:
+            state["selected_focus"] = len(FOCUS_DURATION) - 1
+        changed = True
+        
+    if display.pressed(badger2040.BUTTON_DOWN):
+        state["selected_focus"] += 1
+        if state["selected_focus"] >= len(FOCUS_DURATION):
+            state["selected_focus"] = 0
+        changed = True
+
+    if display.pressed(badger2040.BUTTON_C):    
+        activity0, time0_red, time0_orange = FOCUS_DURATION[state["selected_focus"]]
+        time0_m = int(time0) / 60
+        time0_m_r= str(round(time0_m))
+        print(time0_m_r)
+        slice_duration, focus_time = calculate_slice_length(slice_duration,int(time0))
+        draw_focus_framework()
+        display.led(0)
+        countdown(int(time0))
+
+    if changed:
+        draw_focus_framework()
+        draw_focus_menu()
+        badger_os.state_save("timerstate", state)
+        print(state["selected_focus"])
+        changed = False
+        display.led(0)
+
+    display.halt()
