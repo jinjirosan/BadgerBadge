@@ -848,6 +848,7 @@ while True:
         draw_light_green_fill = True
         draw_light_green()
         draw_focus_framework()
+        display.led(0)
 
     if changed:
         draw_frame()
