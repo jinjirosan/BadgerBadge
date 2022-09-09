@@ -1,7 +1,7 @@
 # Badge Platform Eva - hardware platform v3.0
 # (2022) Voor m'n lieve guppie
 #
-# launcher.py : v3.0-refactor 1.2
+# launcher.py : v3.0-refactor 1.3
 
 import gc
 import time
@@ -34,7 +34,7 @@ else:
     # Otherwise restore previously running app
     badger_os.state_launch()
 
-# for e.g. 2xAAA batteries, try max 3.4 min 3.0
+# for e.g. 2xAAA batteries, try max 3.4 min 3.0 
 MAX_BATTERY_VOLTAGE = 4.0
 MIN_BATTERY_VOLTAGE = 3.15
 
@@ -62,7 +62,7 @@ icons_width = 576  # original size
 #icons_width = 640
 
 # the array is filename.py , icon number to display
-# timer=0, elevation=1, temp=2, image=3, list=4, badge=5, info=6, help=7, radio=8
+# timer=0, elevation=1, temp=2, image=3, list=4, badge=5, info=6, focus=7, radio=8
 examples = [
     ("_badge", 5),
     ("_list", 4),
@@ -70,6 +70,7 @@ examples = [
     ("_timer", 0),
     ("_temp", 2),
     ("_elevation", 1),
+    ("_focus", 7)
 ]
 
 font_sizes = (0.5, 0.7, 0.9)
