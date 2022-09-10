@@ -10,6 +10,7 @@ Well almost, I added a couple of things to make it practical for my purposes.  T
 - Timer : an activity countdown timer with 6 selectable activities and preset times
 - Temp : displays the current temperature, humidity, pressure and shows descriptions on the weather
 - Elevation : measure height in meters and floors
+- Focus : a Pomodoro-like timer in traffic light. Presets on Red time (focus, don't disturb) and Orange (can whisper, be slightly distracted) time
 
 The badge is now on Hardware Prototype Platform v3
 
