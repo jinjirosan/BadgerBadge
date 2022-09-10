@@ -51,3 +51,9 @@ The SigFox module will be used to send periodic messages back on status. Added b
 
 ![elevation](https://github.com/jinjirosan/BadgerBadge/blob/main/images/im_5.jpg)
 ###### --> image: The elevation app
+
+![elevation](https://github.com/jinjirosan/BadgerBadge/blob/main/images/im_10.jpg)
+###### --> image: The focus app, menu
+
+![elevation](https://github.com/jinjirosan/BadgerBadge/blob/main/images/im_11.jpg)
+###### --> image: The focus app, countdown and traffic light change
