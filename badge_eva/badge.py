@@ -27,9 +27,18 @@ RP2040
 E ink
 296x128px"""
 
+# Time delay in seconds between consecutive button press checks
+BUTTON_PRESS_DELAY = 0.2
+
+# Flag to keep track of which badge image to display
+is_qr_image = False
+
+# Load the badge images
 BADGE_IMAGE = bytearray(int(IMAGE_WIDTH * HEIGHT / 8))
+BADGE_IMAGE_QR = bytearray(int(IMAGE_WIDTH * HEIGHT / 8))
 
 try:
+    # Load the original badge image
     open("badge-image.bin", "rb").readinto(BADGE_IMAGE)
 except OSError:
     try:
@@ -39,6 +48,15 @@ except OSError:
     except ImportError:
         pass
 
+try:
+    # Load the new badge image (QR code)
+    open("badge-image-QR.bin", "rb").readinto(BADGE_IMAGE_QR)
+except OSError:
+    # If the new badge image cannot be loaded, set it to None
+    BADGE_IMAGE_QR = None
+
+# Load the initial badge image
+CURRENT_BADGE_IMAGE = BADGE_IMAGE
 
 # ------------------------------
 #      Utility functions
@@ -54,6 +72,14 @@ def truncatestring(text, text_size, width):
             text += ""
             return text
 
+# Function to toggle between badge images
+def toggle_badge_image():
+    global is_qr_image
+    is_qr_image = not is_qr_image
+    if is_qr_image:
+        CURRENT_BADGE_IMAGE = BADGE_IMAGE_QR
+    else:
+        CURRENT_BADGE_IMAGE = BADGE_IMAGE
 
 # ------------------------------
 #      Drawing functions
@@ -65,7 +91,12 @@ def draw_badge():
     display.clear()
 
     # Draw badge image
-    display.image(BADGE_IMAGE, IMAGE_WIDTH, HEIGHT, WIDTH - IMAGE_WIDTH, 0)
+    if is_qr_image:
+        # Draw QR code image
+        display.image(BADGE_IMAGE_QR, IMAGE_WIDTH, HEIGHT, WIDTH - IMAGE_WIDTH, 0)
+    else:
+        # Draw badge image
+        display.image(BADGE_IMAGE, IMAGE_WIDTH, HEIGHT, WIDTH - IMAGE_WIDTH, 0)
 
     # Draw a border around the image
     display.pen(0)
@@ -171,31 +202,41 @@ detail2_text = truncatestring(detail2_text, DETAILS_TEXT_SIZE,
 draw_badge()
 
 while True:
-    if display.pressed(badger2040.BUTTON_A):
-        badger_os.warning(display, "je hebt op A gedrukt. Dit scherm gaat na 4 secs weg")
-        time.sleep(4)
-        draw_badge()
+    #if display.pressed(badger2040.BUTTON_A):
+        #badger_os.warning(display, "je hebt op A gedrukt. Dit scherm gaat na 4 secs weg")
+        #time.sleep(4)
+        #draw_badge()
 
-    if display.pressed(badger2040.BUTTON_B):
-        badger_os.warning(display, "je hebt op B gedrukt. Dit scherm gaat na 4 secs weg")
-        time.sleep(4)
-        draw_badge()
+    #if display.pressed(badger2040.BUTTON_B):
+        #badger_os.warning(display, "je hebt op B gedrukt. Dit scherm gaat na 4 secs weg")
+        #time.sleep(4)
+        #draw_badge()
 
-    if display.pressed(badger2040.BUTTON_C):
-        badger_os.warning(display, "je hebt op C gedrukt. Dit scherm gaat na 4 secs weg")
-        time.sleep(4)
-        draw_badge()
+    #if display.pressed(badger2040.BUTTON_C):
+        #badger_os.warning(display, "je hebt op C gedrukt. Dit scherm gaat na 4 secs weg")
+        #time.sleep(4)
+        #draw_badge()
 
     if display.pressed(badger2040.BUTTON_UP):
-        badger_os.warning(display, "je hebt op pijl omhoog gedrukt. Dit scherm gaat na 4 secs weg")
-        time.sleep(4)
-        draw_badge()
+        # Toggle between badge images
+        toggle_badge_image()
 
+        # Redraw the badge with the updated image
+        draw_badge()        
+
+        # Introduce a small delay to prevent consecutive button presses from being detected as one
+        time.sleep(BUTTON_PRESS_DELAY)
+        
     if display.pressed(badger2040.BUTTON_DOWN):
-        badger_os.warning(display, "je hebt op pijl omlaag gedrukt. Dit scherm gaat na 4 secs weg")
-        time.sleep(4)
-        draw_badge()
+        # Toggle between badge images
+        toggle_badge_image()
 
+        # Redraw the badge with the updated image
+        draw_badge()     
+
+        # Introduce a small delay to prevent consecutive button presses from being detected as one
+        time.sleep(BUTTON_PRESS_DELAY)
+        
     display.update()
 
     # If on battery, halt the Badger to save power, it will wake up if any of the front buttons are pressed
