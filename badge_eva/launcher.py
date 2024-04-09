@@ -262,6 +262,27 @@ def SigfoxSend():
                 data=lora.read(4)        # We should get a OK response
                 print(data)
 
+
+def map_battery_voltage_to_percentage(voltage):
+    # Map the voltage to a percentage
+    percentage = ((voltage - MIN_BATTERY_VOLTAGE) / (MAX_BATTERY_VOLTAGE - MIN_BATTERY_VOLTAGE)) * 100
+    # Adjust the percentage if it's 100% to show as 99%
+    percentage_rounded = 99 if round(percentage) == 100 else round(percentage)
+    return percentage_rounded
+
+def save_battery_state():
+    # Retrieve the current battery voltage
+    battery_voltage = badger_os.get_battery_level()
+    # Convert the voltage to a percentage for user-friendly display
+    battery_percentage = map_battery_voltage_to_percentage(battery_voltage)
+    # Round the voltage to two decimal places for consistency
+    battery_voltage_rounded = round(battery_voltage, 2)
+    # Prepare the state dictionary with the rounded and adjusted values
+    battery_state = {"battery_voltage": battery_voltage_rounded, "battery_percentage": battery_percentage}
+    # Save the state using badger_os
+    badger_os.state_save("battery_state", battery_state)
+
+
 if exited_to_launcher or not woken_by_button:
     wait_for_user_to_release_buttons()
     display.update_speed(badger2040.UPDATE_MEDIUM)
@@ -286,4 +307,5 @@ while True:
         badger_os.state_save("launcher", state)
         changed = False
 
+    save_battery_state()
     display.halt()
