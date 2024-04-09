@@ -1,7 +1,7 @@
 # Badge Platform Eva - hardware platform v3.0
 # (2022) Voor m'n lieve guppie
 #
-# temp.py : v3.1-refactor 1.4
+# temp.py : v3.2-refactor 1.4
 
 import time
 from breakout_bme68x import BreakoutBME68X, STATUS_HEATER_STABLE
@@ -33,8 +33,10 @@ sea_level_pressure = 1013.25
 def describe_temperature(correctedtemp):
     if temp < 10:
         description = "freeze"
-    elif 10 <= temp < 20:
+    elif 10 <= temp < 14:
         description = "cold"
+    elif 14 <= temp < 20:
+        description = "fine"
     elif 20 <= temp < 25:
         description = "nice"
     elif 25 <= temp < 30:
@@ -116,10 +118,10 @@ def save_temperature_state(corrected_celsius_temperature):
 def approximate_aqi_from_bme680(gas_resistance):
     """Approximates AQI from BME680 gas resistance readings."""
     # Example thresholds and mappings, these should be calibrated
-    if gas_resistance > 20:
+    if gas_resistance > 19:
         aqi = 50  # Good air quality
         mapping = "Good"
-    elif gas_resistance > 15:
+    elif gas_resistance > 14:
         aqi = 100  # Moderate air quality
         mapping = "Moderate"
     elif gas_resistance > 10:
