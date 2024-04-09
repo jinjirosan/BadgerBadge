@@ -1,3 +1,8 @@
+# Badge Platform Eva - hardware platform v3.0
+# (2022-2024) Voor m'n lieve guppie
+#
+# badge.py : v2.2-refactor 0.1
+
 import time
 import badger2040
 import badger_os
