@@ -1,6 +1,11 @@
 import time
 import badger2040
 import badger_os
+from machine import UART
+from machine import Pin
+
+# Initialize serial Port
+lora = UART(0,baudrate = 9600,tx = Pin(0),rx = Pin(1))
 
 # Global Constants
 WIDTH = badger2040.WIDTH
@@ -156,6 +161,48 @@ def draw_badge():
     display.thickness(2)
     display.text(detail2_text, LEFT_PADDING + name_length + DETAIL_SPACING, HEIGHT - (DETAILS_HEIGHT // 2), DETAILS_TEXT_SIZE)
 
+# ------------------------------
+#        Sigfox functions
+# ------------------------------
+
+def SigfoxInfo():        
+    sf_info = dict();
+    print("Get Status - should be OK")
+    lora.write("AT\r\n")      # Write AT Command
+    time.sleep(2)
+    sf_status = lora.read(2)         # Response Should be OK
+    sf_info['Status'] = sf_status
+    print(sf_status)
+
+    print("Get ID")
+    lora.write("AT$I=10\r\n") # Send Command to Get ID
+    time.sleep(2)
+    sf_id = lora.read(10)
+    sf_info['ID'] = sf_id
+    print(sf_id)
+
+    print("Get PAC")
+    lora.write("AT$I=11\r\n") # Send Command to Get ID
+    time.sleep(2)
+    sf_pac = lora.read(18)
+    sf_info['PAC'] = sf_pac
+    print(sf_pac)
+    
+    return sf_info
+    
+def SigfoxSend():
+    # Initiate a Transmission
+    print("Init Transmission")
+    time.sleep(1)
+    lora.write("AT$RC\r\n") # Send Command to Reset Macro Channels
+    time.sleep(2)
+    data=lora.read(4)
+    print(data)
+    lora.write("AT$SF=AABBCCDD\r\n")  # sends a test string "AABBCCDD"
+    time.sleep(6)
+    data=lora.read(4)        # We should get a OK response
+    print(data)
+
 
 # ------------------------------
 #        Program setup
@@ -238,6 +285,7 @@ while True:
         time.sleep(BUTTON_PRESS_DELAY)
         
     display.update()
+    SigfoxSend()
 
     # If on battery, halt the Badger to save power, it will wake up if any of the front buttons are pressed
     display.halt()
