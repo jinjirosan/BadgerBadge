@@ -1,7 +1,7 @@
 # Badge Platform Eva - hardware platform v3.0
 # (2022-2024) Voor m'n lieve guppie
 #
-# badge.py : v2.2-refactor 0.1
+# badge.py : v2.2-refactor 0.2
 
 import time
 import badger2040
@@ -44,26 +44,17 @@ BUTTON_PRESS_DELAY = 0.2
 is_qr_image = False
 
 # Load the badge images
-BADGE_IMAGE = bytearray(int(IMAGE_WIDTH * HEIGHT / 8))
-BADGE_IMAGE_QR = bytearray(int(IMAGE_WIDTH * HEIGHT / 8))
-
-try:
-    # Load the original badge image
-    open("badge-image.bin", "rb").readinto(BADGE_IMAGE)
-except OSError:
+#BADGE_IMAGE = bytearray(int(IMAGE_WIDTH * HEIGHT / 8))
+#BADGE_IMAGE_QR = bytearray(int(IMAGE_WIDTH * HEIGHT / 8))
+def load_image(filename):
     try:
-        import badge_image
-        BADGE_IMAGE = bytearray(badge_image.data())
-        del badge_image
-    except ImportError:
-        pass
+        with open(filename, "rb") as file:
+            return bytearray(file.read())
+    except OSError:
+        return None
 
-try:
-    # Load the new badge image (QR code)
-    open("badge-image-QR.bin", "rb").readinto(BADGE_IMAGE_QR)
-except OSError:
-    # If the new badge image cannot be loaded, set it to None
-    BADGE_IMAGE_QR = None
+BADGE_IMAGE = load_image("badge-image.bin") or bytearray(int(IMAGE_WIDTH * HEIGHT / 8))
+BADGE_IMAGE_QR = load_image("badge-image-QR.bin") or None
 
 # Load the initial badge image
 CURRENT_BADGE_IMAGE = BADGE_IMAGE
@@ -84,12 +75,13 @@ def truncatestring(text, text_size, width):
 
 # Function to toggle between badge images
 def toggle_badge_image():
-    global is_qr_image
+    global is_qr_image, CURRENT_BADGE_IMAGE
     is_qr_image = not is_qr_image
-    if is_qr_image:
-        CURRENT_BADGE_IMAGE = BADGE_IMAGE_QR
-    else:
-        CURRENT_BADGE_IMAGE = BADGE_IMAGE
+    CURRENT_BADGE_IMAGE = BADGE_IMAGE_QR if is_qr_image else BADGE_IMAGE
+    # Explicitly call the draw function here might help to ensure that changes are immediately reflected.
+    draw_badge()
+
+
 
 # ------------------------------
 #      Drawing functions
@@ -101,12 +93,15 @@ def draw_badge():
     display.clear()
 
     # Draw badge image
-    if is_qr_image:
-        # Draw QR code image
-        display.image(BADGE_IMAGE_QR, IMAGE_WIDTH, HEIGHT, WIDTH - IMAGE_WIDTH, 0)
-    else:
-        # Draw badge image
-        display.image(BADGE_IMAGE, IMAGE_WIDTH, HEIGHT, WIDTH - IMAGE_WIDTH, 0)
+#    if is_qr_image:
+#        # Draw QR code image
+#        display.image(BADGE_IMAGE_QR, IMAGE_WIDTH, HEIGHT, WIDTH - IMAGE_WIDTH, 0)
+#    else:
+#        # Draw badge image
+#        display.image(BADGE_IMAGE, IMAGE_WIDTH, HEIGHT, WIDTH - IMAGE_WIDTH, 0)
+
+    # Draw badge image
+    display.image(CURRENT_BADGE_IMAGE, IMAGE_WIDTH, HEIGHT, WIDTH - IMAGE_WIDTH, 0)
 
     # Draw a border around the image
     display.pen(0)
@@ -290,6 +285,8 @@ while True:
         time.sleep(BUTTON_PRESS_DELAY)
         
     display.update()
+
+#	Sending an invisible ping to Sigfox everytime the badge is started.
     SigfoxSend()
 
     # If on battery, halt the Badger to save power, it will wake up if any of the front buttons are pressed
