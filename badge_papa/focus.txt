@@ -1,0 +1,9 @@
+Focus 50 mins
+3000
+600
+Focus 25 mins
+1500
+300
+Focus 12 mins
+720
+180
