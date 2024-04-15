@@ -1,0 +1,12 @@
+Japanse Thee
+150
+Presentatie 18
+1080
+Timer 5
+300
+Timer 10
+600
+Timer 15
+900
+Timer 20
+1200
