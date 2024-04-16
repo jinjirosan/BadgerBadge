@@ -1,3 +1,8 @@
+# Badge Platform papa - hardware platform v3.0
+# (2022-2024) 
+#
+# launcher.py : v3.1-refactor 1.3
+
 import gc
 import time
 import math
@@ -6,6 +11,7 @@ from badger2040 import WIDTH
 import launchericons
 import badger_os
 from machine import Pin, ADC   # needed for correct battery detection
+from machine import UART
 
 # Battery initialization, otherwise battery not detected
 vbat_adc = ADC(badger2040.PIN_BATTERY)
@@ -28,10 +34,14 @@ else:
     # Otherwise restore previously running app
     badger_os.state_launch()
 
-# for e.g. 2xAAA batteries, try max 3.4 min 3.0
+# for e.g. 2xAAA batteries, try max 3.4 min 3.0 
 MAX_BATTERY_VOLTAGE = 4.0
 MIN_BATTERY_VOLTAGE = 3.15
 
+# Initialize serial Port
+lora = UART(0,baudrate = 9600,tx = Pin(0),rx = Pin(1))
+
+# Initialize display
 display = badger2040.Badger2040()
 display.led(128)
 
@@ -47,16 +57,20 @@ badger_os.state_load("launcher", state)
 display.invert(state["inverted"])
  
 icons = bytearray(launchericons.data())
-icons_width = 576
+icons_width = 576  # original size
+#icons_width = 832
+#icons_width = 640
 
 # the array is filename.py , icon number to display
-# timer=0, elevation=1, temp=2, image=3, list=4, badge=5, info=6, help=7, radio=8
+# timer=0, elevation=1, temp=2, image=3, list=4, badge=5, info=6, focus=7, radio=8
 examples = [
     ("_badge", 5),
     ("_list", 4),
     ("_image", 3),
+    ("_timer", 0),
     ("_temp", 2),
     ("_elevation", 1),
+    ("_focus", 7)
 ]
 
 font_sizes = (0.5, 0.7, 0.9)
@@ -159,7 +173,7 @@ def render():
     bat = int(map_value(vbat, MIN_BATTERY_VOLTAGE, MAX_BATTERY_VOLTAGE, 0, 4))
     draw_battery(bat, WIDTH - 22 - 3, 3)
     display.pen(15)
-    display.text("RayOS", 3, 8, 0.4)
+    display.text("EvaOS", 3, 8, 0.4)
 
     display.update()
 
@@ -220,6 +234,55 @@ def button(pin):
             render()
 
 
+def SigfoxInfo():        
+                print("Get Status - should be OK")
+                lora.write("AT\r\n")      # Write AT Command
+                data=lora.read(2)         # Response Should be OK
+                print(data)
+
+                print("Get ID")
+                lora.write("AT$I=10\r\n") # Send Command to Get ID
+                data=lora.read(10)
+                print(data)
+
+                print("Get PAC")
+                lora.write("AT$I=11\r\n") # Send Command to Get ID
+                data=lora.read(18)
+                print(data)
+
+def SigfoxSend():
+                # Initiate a Transmission
+                print("Init Transmission")
+                sleep(1)
+                lora.write("AT$RC\r\n") # Send Command to Reset Macro Channels
+                data=lora.read(4)
+                print(data)
+                lora.write("AT$SF=AABBCCDD\r\n")
+                sleep(6)
+                data=lora.read(4)        # We should get a OK response
+                print(data)
+
+
+def map_battery_voltage_to_percentage(voltage):
+    # Map the voltage to a percentage
+    percentage = ((voltage - MIN_BATTERY_VOLTAGE) / (MAX_BATTERY_VOLTAGE - MIN_BATTERY_VOLTAGE)) * 100
+    # Adjust the percentage if it's 100% to show as 99%
+    percentage_rounded = 99 if round(percentage) == 100 else round(percentage)
+    return percentage_rounded
+
+def save_battery_state():
+    # Retrieve the current battery voltage
+    battery_voltage = badger_os.get_battery_level()
+    # Convert the voltage to a percentage for user-friendly display
+    battery_percentage = map_battery_voltage_to_percentage(battery_voltage)
+    # Round the voltage to two decimal places for consistency
+    battery_voltage_rounded = round(battery_voltage, 2)
+    # Prepare the state dictionary with the rounded and adjusted values
+    battery_state = {"battery_voltage": battery_voltage_rounded, "battery_percentage": battery_percentage}
+    # Save the state using badger_os
+    badger_os.state_save("battery_state", battery_state)
+
+
 if exited_to_launcher or not woken_by_button:
     wait_for_user_to_release_buttons()
     display.update_speed(badger2040.UPDATE_MEDIUM)
@@ -244,4 +307,7 @@ while True:
         badger_os.state_save("launcher", state)
         changed = False
 
+    save_battery_state()
     display.halt()
+
+
