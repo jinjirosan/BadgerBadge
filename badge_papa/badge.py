@@ -1,7 +1,7 @@
 # Badge Platform papa - hardware platform v3.0
 # (2022-2024)
 #
-# badge.py : v2.6-refactor 0.0.1
+# badge.py : v2.6-refactor 0.0.2
 
 import time
 import badger2040
@@ -123,7 +123,7 @@ def cycle_badge_type(direction):
     CURRENT_BADGE_IMAGE = load_image(current_image_file) or bytearray(int(IMAGE_WIDTH * HEIGHT / 8))
 
     draw_badge()  # Redraw immediately after state change
-    display.update()  # Ensure the display is updated immediately
+
 
 
 
