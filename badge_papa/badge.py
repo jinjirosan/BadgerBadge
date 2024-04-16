@@ -1,7 +1,7 @@
 # Badge Platform papa - hardware platform v3.0
 # (2022-2024)
 #
-# badge.py : v2.5-refactor 0.1
+# badge.py : v2.6-refactor 0.0.1
 
 import time
 import badger2040
@@ -246,6 +246,14 @@ def draw_personal_badge():
     display.thickness(2)
     display.text(detail2_text, LEFT_PADDING + name_length + DETAIL_SPACING, HEIGHT - (DETAILS_HEIGHT // 2), DETAILS_TEXT_SIZE)
 
+    # Draw button C QR label
+    display.pen(15)
+    display.font("sans")
+    display.thickness(1)
+    display.rectangle(271, 118, 19, 9)
+    display.pen(0)
+    display.text("QR", 273, 122, 0.4)
+    display.pen(15)
 
 # Function to draw the work badge with dynamic text sizing
 def draw_work_badge():
