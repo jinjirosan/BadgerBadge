@@ -173,7 +173,7 @@ def render():
     bat = int(map_value(vbat, MIN_BATTERY_VOLTAGE, MAX_BATTERY_VOLTAGE, 0, 4))
     draw_battery(bat, WIDTH - 22 - 3, 3)
     display.pen(15)
-    display.text("EvaOS", 3, 8, 0.4)
+    display.text("RayOS", 3, 8, 0.4)
 
     display.update()
 
