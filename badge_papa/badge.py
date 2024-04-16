@@ -1,11 +1,12 @@
 # Badge Platform papa - hardware platform v3.0
 # (2022-2024)
 #
-# badge.py : v2.2-refactor 0.1
+# badge.py : v2.4-refactor 0.1
 
 import time
 import badger2040
 import badger_os
+import os
 from machine import UART
 from machine import Pin
 
@@ -59,6 +60,9 @@ BADGE_IMAGE_QR = load_image("badge-image-QR.bin") or None
 # Load the initial badge image
 CURRENT_BADGE_IMAGE = BADGE_IMAGE
 
+# Add a state variable to manage badge type
+current_badge_type = 0  # 0: Personal, 1: Work, 2: Event
+
 # ------------------------------
 #      Utility functions
 # ------------------------------
@@ -82,23 +86,76 @@ def toggle_badge_image():
     draw_badge()
 
 
+# Function to cycle through badge types
+def cycle_badge_type(direction):
+    global current_badge_type
+    max_badge_types = 3  # Total number of badge types
+
+    if direction == "up":
+        current_badge_type = (current_badge_type + 1) % max_badge_types
+    elif direction == "down":
+        current_badge_type = (current_badge_type - 1 + max_badge_types) % max_badge_types
+
+    draw_badge()  # Redraw immediately after state change
+    display.update()  # Ensure the display is updated immediately
+
+
+# Redesigned draw_badge function to handle multiple badge types
+def draw_badge():
+    display.led(128)  # Optionally turn on or adjust the LED when drawing a badge for feedback
+    if current_badge_type == 0:
+        draw_personal_badge()
+    elif current_badge_type == 1:
+        draw_work_badge()
+    elif current_badge_type == 2:
+        draw_event_badge()
+    display.update()  # Make sure to update the display to reflect changes
+    turn_off_led()    # Turn off the LED after the badge is drawn
+
+# Function to check button states and manage debouncing
+def check_buttons():
+    last_button_state_up = False
+    last_button_state_down = False
+    debounce_time = 0.2  # Debounce time in seconds
+
+    while True:
+        current_up = display.pressed(badger2040.BUTTON_UP)
+        current_down = display.pressed(badger2040.BUTTON_DOWN)
+
+        # Check for button up press
+        if current_up and not last_button_state_up:
+            cycle_badge_type("up")
+            time.sleep(debounce_time)  # Debounce delay
+
+        # Check for button down press
+        if current_down and not last_button_state_down:
+            cycle_badge_type("down")
+            time.sleep(debounce_time)  # Debounce delay
+
+        # Update last states
+        last_button_state_up = current_up
+        last_button_state_down = current_down
+
+        # Sleep to reduce CPU usage (adjust this value if necessary to optimize responsiveness vs power usage)
+        time.sleep(0.05)
+
+# Detect if running on battery
+def is_on_battery():
+    # This is a placeholder function. You'll need to replace it with the actual method to detect power source if available.
+    return not os.uname().machine.startswith("USB")
+
+# Function to turn off the LED explicitly
+def turn_off_led():
+    display.led(0)
 
 # ------------------------------
 #      Drawing functions
 # ------------------------------
 
-# Draw the badge, including user text
-def draw_badge():
+# Draw the personal badge, including user text
+def draw_personal_badge():
     display.pen(0)
     display.clear()
-
-    # Draw badge image
-#    if is_qr_image:
-#        # Draw QR code image
-#        display.image(BADGE_IMAGE_QR, IMAGE_WIDTH, HEIGHT, WIDTH - IMAGE_WIDTH, 0)
-#    else:
-#        # Draw badge image
-#        display.image(BADGE_IMAGE, IMAGE_WIDTH, HEIGHT, WIDTH - IMAGE_WIDTH, 0)
 
     # Draw badge image
     display.image(CURRENT_BADGE_IMAGE, IMAGE_WIDTH, HEIGHT, WIDTH - IMAGE_WIDTH, 0)
@@ -160,6 +217,51 @@ def draw_badge():
     display.text(detail2_title, LEFT_PADDING, HEIGHT - (DETAILS_HEIGHT // 2), DETAILS_TEXT_SIZE)
     display.thickness(2)
     display.text(detail2_text, LEFT_PADDING + name_length + DETAIL_SPACING, HEIGHT - (DETAILS_HEIGHT // 2), DETAILS_TEXT_SIZE)
+
+
+# Function to draw the work badge with dynamic text sizing
+def draw_work_badge():
+    display.pen(0)
+    display.clear()
+
+    work_text = "WORKBADGE"
+    # Start with a reasonable size and decrease until it fits
+    text_size = 2
+    while display.measure_text(work_text, text_size) > WIDTH and text_size > 0:
+        text_size -= 0.1  # Decrease the text size incrementally
+
+    # Set the text color and font
+    display.pen(15)  # White text
+    display.font("sans")
+    display.thickness(2)
+
+    # Calculate text position to center it
+    text_width = display.measure_text(work_text, text_size)
+    display.text(work_text, (WIDTH - text_width) // 2, HEIGHT // 2, text_size)
+
+    #display.update()
+    
+# Function to draw the event badge with dynamic text sizing
+def draw_event_badge():
+    display.pen(0)
+    display.clear()
+
+    event_text = "EVENTBADGE"
+    # Start with a reasonable size and decrease until it fits
+    text_size = 2
+    while display.measure_text(event_text, text_size) > WIDTH and text_size > 0:
+        text_size -= 0.1  # Decrease the text size incrementally
+
+    # Set the text color and font
+    display.pen(15)  # White text
+    display.font("sans")
+    display.thickness(2)
+
+    # Calculate text position to center it
+    text_width = display.measure_text(event_text, text_size)
+    display.text(event_text, (WIDTH - text_width) // 2, HEIGHT // 2, text_size)
+
+    #display.update()
 
 # ------------------------------
 #        Sigfox functions
@@ -246,48 +348,34 @@ detail2_text = truncatestring(detail2_text, DETAILS_TEXT_SIZE,
 #       Main program
 # ------------------------------
 
+# Draw the initial badge on startup
 draw_badge()
 
-while True:
-    #if display.pressed(badger2040.BUTTON_A):
-        #badger_os.warning(display, "je hebt op A gedrukt. Dit scherm gaat na 4 secs weg")
-        #time.sleep(4)
-        #draw_badge()
+# Sending an invisible ping to Sigfox everytime the badge is started.
+SigfoxSend()
 
-    #if display.pressed(badger2040.BUTTON_B):
-        #badger_os.warning(display, "je hebt op B gedrukt. Dit scherm gaat na 4 secs weg")
-        #time.sleep(4)
-        #draw_badge()
+#display.update()
 
-    #if display.pressed(badger2040.BUTTON_C):
-        #badger_os.warning(display, "je hebt op C gedrukt. Dit scherm gaat na 4 secs weg")
-        #time.sleep(4)
-        #draw_badge()
+try:
+#    draw_badge()  # Draw the initial badge on startup
+    while True:
+        check_buttons()  # Continuously check and handle button inputs
 
-    if display.pressed(badger2040.BUTTON_UP):
-        # Toggle between badge images
-        toggle_badge_image()
+        # No need to constantly update the display here if not changing
+        # display.update()  # This could be commented out if updates are handled inside draw_badge and check_buttons
 
-        # Redraw the badge with the updated image
-        draw_badge()        
-
-        # Introduce a small delay to prevent consecutive button presses from being detected as one
-        time.sleep(BUTTON_PRESS_DELAY)
+        # Reset LED after operations -- redundant here as it's handled in draw_badge but good for safety
+        turn_off_led()  
         
-    if display.pressed(badger2040.BUTTON_DOWN):
-        # Toggle between badge images
-        toggle_badge_image()
+        # Use halt only if not on battery or ensure wake-up on button press is configured correctly
+        # If on battery, halt the Badger to save power, it will wake up if any of the front buttons are pressed
+        if not is_on_battery():
+            display.halt()
 
-        # Redraw the badge with the updated image
-        draw_badge()     
+except KeyboardInterrupt:
+    print("Program terminated by user.")
 
-        # Introduce a small delay to prevent consecutive button presses from being detected as one
-        time.sleep(BUTTON_PRESS_DELAY)
-        
-    display.update()
 
-#	Sending an invisible ping to Sigfox everytime the badge is started.
-    SigfoxSend()
 
-    # If on battery, halt the Badger to save power, it will wake up if any of the front buttons are pressed
-    display.halt()
+
+
