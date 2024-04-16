@@ -1,7 +1,7 @@
 # Badge Platform papa - hardware platform v3.0
 # (2022-2024)
 #
-# badge.py : v2.4-refactor 0.1
+# badge.py : v2.5-refactor 0.1
 
 import time
 import badger2040
@@ -54,11 +54,14 @@ def load_image(filename):
     except OSError:
         return None
 
-BADGE_IMAGE = load_image("badge-image.bin") or bytearray(int(IMAGE_WIDTH * HEIGHT / 8))
-BADGE_IMAGE_QR = load_image("badge-image-QR.bin") or None
+current_image_file = "badge-personal-image.bin"  # Adjust as necessary based on your starting badge
+
+BADGE_IMAGE = load_image("badge-personal-image.bin") or bytearray(int(IMAGE_WIDTH * HEIGHT / 8))
+BADGE_IMAGE_QR = load_image("badge-personal-image_qr.bin") or None
 
 # Load the initial badge image
 CURRENT_BADGE_IMAGE = BADGE_IMAGE
+
 
 # Add a state variable to manage badge type
 current_badge_type = 0  # 0: Personal, 1: Work, 2: Event
@@ -78,17 +81,29 @@ def truncatestring(text, text_size, width):
             return text
 
 # Function to toggle between badge images
-def toggle_badge_image():
-    global is_qr_image, CURRENT_BADGE_IMAGE
-    is_qr_image = not is_qr_image
-    CURRENT_BADGE_IMAGE = BADGE_IMAGE_QR if is_qr_image else BADGE_IMAGE
-    # Explicitly call the draw function here might help to ensure that changes are immediately reflected.
+def toggle_qr_image():
+    global CURRENT_BADGE_IMAGE, current_image_file
+    print(f"Current image before toggle: {current_image_file}")
+    
+    if "_qr" in current_image_file:
+        new_image_file = current_image_file.replace("_qr.bin", ".bin")
+    else:
+        new_image_file = current_image_file.replace(".bin", "_qr.bin")
+
+    print(f"Attempting to load image from: {new_image_file}")
+    new_image = load_image(new_image_file)
+    if new_image:
+        CURRENT_BADGE_IMAGE = new_image
+        current_image_file = new_image_file
+        print(f"Switched to image: {new_image_file}")
+    else:
+        print("Failed to load image:", new_image_file)
+
     draw_badge()
-
-
-# Function to cycle through badge types
+    
+#Function to cycle through badge types
 def cycle_badge_type(direction):
-    global current_badge_type
+    global current_badge_type, current_image_file
     max_badge_types = 3  # Total number of badge types
 
     if direction == "up":
@@ -96,8 +111,20 @@ def cycle_badge_type(direction):
     elif direction == "down":
         current_badge_type = (current_badge_type - 1 + max_badge_types) % max_badge_types
 
+    # Update current_image_file based on the current badge type
+    if current_badge_type == 0:
+        current_image_file = "badge-personal-image.bin"
+    elif current_badge_type == 1:
+        current_image_file = "badge-work-image.bin"
+    elif current_badge_type == 2:
+        current_image_file = "badge-event-image.bin"
+
+    # Load the initial image for the new badge type
+    CURRENT_BADGE_IMAGE = load_image(current_image_file) or bytearray(int(IMAGE_WIDTH * HEIGHT / 8))
+
     draw_badge()  # Redraw immediately after state change
     display.update()  # Ensure the display is updated immediately
+
 
 
 # Redesigned draw_badge function to handle multiple badge types
@@ -114,30 +141,31 @@ def draw_badge():
 
 # Function to check button states and manage debouncing
 def check_buttons():
-    last_button_state_up = False
-    last_button_state_down = False
-    debounce_time = 0.2  # Debounce time in seconds
+    global last_button_state_up, last_button_state_down, last_button_state_c
+    current_up = display.pressed(badger2040.BUTTON_UP)
+    current_down = display.pressed(badger2040.BUTTON_DOWN)
+    current_c = display.pressed(badger2040.BUTTON_C)
 
-    while True:
-        current_up = display.pressed(badger2040.BUTTON_UP)
-        current_down = display.pressed(badger2040.BUTTON_DOWN)
+    # Handle UP button
+    if current_up and not last_button_state_up:
+        cycle_badge_type("up")
+        time.sleep(BUTTON_PRESS_DELAY)
 
-        # Check for button up press
-        if current_up and not last_button_state_up:
-            cycle_badge_type("up")
-            time.sleep(debounce_time)  # Debounce delay
+    # Handle DOWN button
+    if current_down and not last_button_state_down:
+        cycle_badge_type("down")
+        time.sleep(BUTTON_PRESS_DELAY)
 
-        # Check for button down press
-        if current_down and not last_button_state_down:
-            cycle_badge_type("down")
-            time.sleep(debounce_time)  # Debounce delay
+    # Handle C button
+    if current_c and not last_button_state_c:
+        toggle_qr_image()
+        time.sleep(BUTTON_PRESS_DELAY)
 
-        # Update last states
-        last_button_state_up = current_up
-        last_button_state_down = current_down
+    # Update last known states
+    last_button_state_up = current_up
+    last_button_state_down = current_down
+    last_button_state_c = current_c
 
-        # Sleep to reduce CPU usage (adjust this value if necessary to optimize responsiveness vs power usage)
-        time.sleep(0.05)
 
 # Detect if running on battery
 def is_on_battery():
@@ -352,18 +380,21 @@ detail2_text = truncatestring(detail2_text, DETAILS_TEXT_SIZE,
 draw_badge()
 
 # Sending an invisible ping to Sigfox everytime the badge is started.
-SigfoxSend()
+#SigfoxSend()
 
 #display.update()
 
 try:
 #    draw_badge()  # Draw the initial badge on startup
+    
+    # Initialize last button states
+    last_button_state_up = False
+    last_button_state_down = False
+    last_button_state_b = False
+    
     while True:
         check_buttons()  # Continuously check and handle button inputs
-
-        # No need to constantly update the display here if not changing
-        # display.update()  # This could be commented out if updates are handled inside draw_badge and check_buttons
-
+            
         # Reset LED after operations -- redundant here as it's handled in draw_badge but good for safety
         turn_off_led()  
         
