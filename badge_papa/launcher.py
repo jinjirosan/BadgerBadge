@@ -1,7 +1,7 @@
 # Badge Platform papa - hardware platform v3.0
 # (2022-2024) 
 #
-# launcher.py : v3.1-refactor 1.3
+# launcher.py : v3.2-refactor 0.0.0
 
 import gc
 import time
@@ -70,7 +70,8 @@ examples = [
     ("_timer", 0),
     ("_temp", 2),
     ("_elevation", 1),
-    ("_focus", 7)
+    ("_focus", 7),
+    ("_battery", 6)
 ]
 
 font_sizes = (0.5, 0.7, 0.9)
