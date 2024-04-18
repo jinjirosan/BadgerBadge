@@ -1,7 +1,7 @@
 # Badge Platform papa - hardware platform v3.0
 # (2022-2024)
 #
-# badge.py : v2.6.1-refactor 0.0.2
+# badge.py : v2.6.2-refactor 0.0.2
 
 import time
 import badger2040
@@ -265,39 +265,56 @@ def draw_personal_badge():
 
 # Function to draw the work badge with dynamic text sizing
 def draw_work_badge():
-    display.pen(0)
+    display.pen(15)
     display.clear()
 
     # Draw badge image
-    display.image(CURRENT_BADGE_IMAGE, IMAGE_WIDTH, HEIGHT, WIDTH - IMAGE_WIDTH, 0)
+    display.image(CURRENT_BADGE_IMAGE, IMAGE_WIDTH, HEIGHT, 0, 0)
 
-    # Draw a border around the image
-    display.pen(0)
-    display.thickness(1)
-    display.line(WIDTH - IMAGE_WIDTH, 0, WIDTH - 1, 0)
-    display.line(WIDTH - IMAGE_WIDTH, 0, WIDTH - IMAGE_WIDTH, HEIGHT - 1)
-    display.line(WIDTH - IMAGE_WIDTH, HEIGHT - 1, WIDTH - 1, HEIGHT - 1)
-    display.line(WIDTH - 1, 0, WIDTH - 1, HEIGHT - 1)
+    work_text = "MDG InfoSec"
+    work_name_text = "Ray Flinkerbusch"
+    work_slogan_text = "SED'QUIS CUSTODIET IPSOS CUSTODES"
 
-
-    #display.pen(0)
-    #display.clear()
-
-    #work_text = "WORKBADGE"
-    # Start with a reasonable size and decrease until it fits
-    #text_size = 2
-    #while display.measure_text(work_text, text_size) > WIDTH and text_size > 0:
-    #    text_size -= 0.1  # Decrease the text size incrementally
+    # Start with a reasonable size for the main text and decrease until it fits
+    text_size = 2
+    while display.measure_text(work_text, text_size) > WIDTH - IMAGE_WIDTH and text_size > 0:
+        text_size -= 0.1  # Decrease the text size incrementally
 
     # Set the text color and font
-    #display.pen(15)  # White text
-    #display.font("sans")
-    #display.thickness(2)
+    display.pen(0)  # Black text for readability
+    display.font("sans")
+    display.thickness(3)
 
-    # Calculate text position to center it
-    #text_width = display.measure_text(work_text, text_size)
-    #display.text(work_text, (WIDTH - text_width) // 2, HEIGHT // 2, text_size)
+    # Calculate text position to fit it next to the image
+    text_width = display.measure_text(work_text, text_size)
+    text_x = IMAGE_WIDTH + (WIDTH - IMAGE_WIDTH - text_width) // 2  # Center text between the image and the right side
+    text_y = 30  # Small padding from the top
+    display.text(work_text, text_x, text_y, text_size)
 
+    # Settings for the name text
+    name_text_size = text_size - 0.4  # Slightly smaller text size
+    display.thickness(2)
+
+    # Calculate position for the name text to align it with the right end of the work_text
+    name_text_width = display.measure_text(work_name_text, name_text_size)
+    name_text_x = text_x + text_width - name_text_width  # Align to the right end of the work_text
+    name_text_y = text_y + 20  # Positioned 20 pixels below the work_text
+    display.text(work_name_text, name_text_x, name_text_y, name_text_size)
+
+    # Settings for the slogan text
+    slogan_text_size = name_text_size  # Same size as name text
+    display.thickness(1)  # Less thickness
+
+    # Fit slogan text across the full width of the display
+    while display.measure_text(work_slogan_text, slogan_text_size) > WIDTH and slogan_text_size > 0:
+        slogan_text_size -= 0.1  # Decrease the text size incrementally if it doesn't fit
+
+    slogan_text_width = display.measure_text(work_slogan_text, slogan_text_size)
+    slogan_text_x = (WIDTH - slogan_text_width) // 2  # Center slogan text horizontally
+    slogan_text_y = HEIGHT - 5  # Positioned 20 pixels above the bottom of the display
+
+    display.text(work_slogan_text, slogan_text_x, slogan_text_y, slogan_text_size)
+    
     #display.update()
     
 # Function to draw the event badge with dynamic text sizing
