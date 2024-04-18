@@ -1,7 +1,7 @@
 # Badge Platform papa - hardware platform v3.0
 # (2022-2024)
 #
-# badge.py : v2.6-refactor 0.0.2
+# badge.py : v2.6.1-refactor 0.0.2
 
 import time
 import badger2040
@@ -50,8 +50,14 @@ is_qr_image = False
 def load_image(filename):
     try:
         with open(filename, "rb") as file:
-            return bytearray(file.read())
-    except OSError:
+            data = file.read()
+            expected_size = int(IMAGE_WIDTH * HEIGHT / 8)
+            actual_size = len(data)
+            if actual_size != expected_size:
+                raise ValueError(f"Expected image size {expected_size} bytes, but got {actual_size} bytes")
+            return bytearray(data)
+    except OSError as e:
+        print(f"Failed to read {filename}: {e}")
         return None
 
 current_image_file = "badge-personal-image.bin"  # Adjust as necessary based on your starting badge
@@ -103,7 +109,7 @@ def toggle_qr_image():
     
 #Function to cycle through badge types
 def cycle_badge_type(direction):
-    global current_badge_type, current_image_file
+    global current_badge_type, current_image_file, CURRENT_BADGE_IMAGE
     max_badge_types = 3  # Total number of badge types
 
     if direction == "up":
@@ -111,7 +117,6 @@ def cycle_badge_type(direction):
     elif direction == "down":
         current_badge_type = (current_badge_type - 1 + max_badge_types) % max_badge_types
 
-    # Update current_image_file based on the current badge type
     if current_badge_type == 0:
         current_image_file = "badge-personal-image.bin"
     elif current_badge_type == 1:
@@ -119,11 +124,10 @@ def cycle_badge_type(direction):
     elif current_badge_type == 2:
         current_image_file = "badge-event-image.bin"
 
-    # Load the initial image for the new badge type
     CURRENT_BADGE_IMAGE = load_image(current_image_file) or bytearray(int(IMAGE_WIDTH * HEIGHT / 8))
+    print(f"Switching to: {current_image_file} with badge type {current_badge_type}")
 
     draw_badge()  # Redraw immediately after state change
-
 
 
 
@@ -184,8 +188,12 @@ def turn_off_led():
 def draw_personal_badge():
     display.pen(0)
     display.clear()
+    
+    print(f"Buffer size: {len(CURRENT_BADGE_IMAGE)}, Expected: {IMAGE_WIDTH * HEIGHT // 8}")
+
 
     # Draw badge image
+    print(f"Displaying at: {WIDTH - IMAGE_WIDTH}, 0 with size {IMAGE_WIDTH}x{HEIGHT}")
     display.image(CURRENT_BADGE_IMAGE, IMAGE_WIDTH, HEIGHT, WIDTH - IMAGE_WIDTH, 0)
 
     # Draw a border around the image
@@ -260,20 +268,35 @@ def draw_work_badge():
     display.pen(0)
     display.clear()
 
-    work_text = "WORKBADGE"
+    # Draw badge image
+    display.image(CURRENT_BADGE_IMAGE, IMAGE_WIDTH, HEIGHT, WIDTH - IMAGE_WIDTH, 0)
+
+    # Draw a border around the image
+    display.pen(0)
+    display.thickness(1)
+    display.line(WIDTH - IMAGE_WIDTH, 0, WIDTH - 1, 0)
+    display.line(WIDTH - IMAGE_WIDTH, 0, WIDTH - IMAGE_WIDTH, HEIGHT - 1)
+    display.line(WIDTH - IMAGE_WIDTH, HEIGHT - 1, WIDTH - 1, HEIGHT - 1)
+    display.line(WIDTH - 1, 0, WIDTH - 1, HEIGHT - 1)
+
+
+    #display.pen(0)
+    #display.clear()
+
+    #work_text = "WORKBADGE"
     # Start with a reasonable size and decrease until it fits
-    text_size = 2
-    while display.measure_text(work_text, text_size) > WIDTH and text_size > 0:
-        text_size -= 0.1  # Decrease the text size incrementally
+    #text_size = 2
+    #while display.measure_text(work_text, text_size) > WIDTH and text_size > 0:
+    #    text_size -= 0.1  # Decrease the text size incrementally
 
     # Set the text color and font
-    display.pen(15)  # White text
-    display.font("sans")
-    display.thickness(2)
+    #display.pen(15)  # White text
+    #display.font("sans")
+    #display.thickness(2)
 
     # Calculate text position to center it
-    text_width = display.measure_text(work_text, text_size)
-    display.text(work_text, (WIDTH - text_width) // 2, HEIGHT // 2, text_size)
+    #text_width = display.measure_text(work_text, text_size)
+    #display.text(work_text, (WIDTH - text_width) // 2, HEIGHT // 2, text_size)
 
     #display.update()
     
