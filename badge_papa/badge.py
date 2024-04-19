@@ -1,7 +1,7 @@
 # Badge Platform papa - hardware platform v3.0
 # (2022-2024)
 #
-# badge.py : v2.6.3-refactor 0.0.2
+# badge.py : v2.6.4-refactor 0.0.2
 
 import time
 import badger2040
@@ -184,6 +184,52 @@ def turn_off_led():
 #      Drawing functions
 # ------------------------------
 
+def draw_cissp_logo(display, x, y, scale):
+    line_width = max(1, scale // 10)  # Basic width for line drawing
+
+    def draw_rect(x1, y1, width, height):
+        for i in range(width):
+            for j in range(height):
+                display.pixel(x1 + i, y1 + j)
+
+    letter_spacing = scale // 2  # Standard spacing between letters
+    letter_width = scale * 2     # Width used for most letters
+
+    # Draw C
+    draw_rect(x, y, line_width, scale)  # Vertical line
+    draw_rect(x, y, letter_width, line_width)  # Top horizontal line
+    draw_rect(x, y + scale - line_width, letter_width, line_width)  # Bottom horizontal line
+
+    # Draw I
+    next_x = x + letter_width + letter_spacing
+    draw_rect(next_x, y, line_width, scale)
+
+    # Draw S - calculate next_x considering I's actual width (line_width) + spacing
+    next_x += line_width + letter_spacing
+    draw_rect(next_x, y, letter_width, line_width)  # Top horizontal line
+    draw_rect(next_x, y + (scale // 2) - (line_width // 2), letter_width, line_width)  # Middle horizontal line
+    draw_rect(next_x, y + scale - line_width, letter_width, line_width)  # Bottom horizontal line
+    draw_rect(next_x, y, line_width, scale // 2)  # Top-left vertical line
+    draw_rect(next_x + letter_width - line_width, y + (scale // 2), line_width, scale // 2)  # Bottom-right vertical line
+
+    # Second S
+    next_x += letter_width + letter_spacing
+    draw_rect(next_x, y, letter_width, line_width)
+    draw_rect(next_x, y + (scale // 2) - (line_width // 2), letter_width, line_width)
+    draw_rect(next_x, y + scale - line_width, letter_width, line_width)
+    draw_rect(next_x, y, line_width, scale // 2)
+    draw_rect(next_x + letter_width - line_width, y + (scale // 2), line_width, scale // 2)
+
+    # P
+    next_x += letter_width + letter_spacing
+    draw_rect(next_x, y, line_width, scale)
+    draw_rect(next_x, y, letter_width, line_width)
+    draw_rect(next_x + letter_width - line_width, y, line_width, scale // 2)
+    draw_rect(next_x, y + (scale // 2) - (line_width // 2), letter_width, line_width)
+
+
+
+
 # Draw the personal badge, including user text
 def draw_personal_badge():
     display.pen(0)
@@ -332,6 +378,8 @@ def draw_work_badge():
     display.pen(0)  # Set pen to black
     display.text(work_slogan_text, slogan_text_x, slogan_text_y, slogan_text_size)
     
+    draw_cissp_logo(display, 230, 85, 6)  # Starts at (10,10), with each letter 40 pixels high
+    
     #display.update()
     
 # Function to draw the event badge with dynamic text sizing
@@ -339,20 +387,20 @@ def draw_event_badge():
     display.pen(0)
     display.clear()
 
-    event_text = "EVENTBADGE"
-    # Start with a reasonable size and decrease until it fits
-    text_size = 2
-    while display.measure_text(event_text, text_size) > WIDTH and text_size > 0:
-        text_size -= 0.1  # Decrease the text size incrementally
+    #event_text = "EVENTBADGE"
+    ## Start with a reasonable size and decrease until it fits
+    #text_size = 2
+    #while display.measure_text(event_text, text_size) > WIDTH and text_size > 0:
+    #    text_size -= 0.1  # Decrease the text size incrementally
 
-    # Set the text color and font
-    display.pen(15)  # White text
-    display.font("sans")
-    display.thickness(2)
+    ## Set the text color and font
+    #display.pen(15)  # White text
+    #display.font("sans")
+    #display.thickness(2)
 
-    # Calculate text position to center it
-    text_width = display.measure_text(event_text, text_size)
-    display.text(event_text, (WIDTH - text_width) // 2, HEIGHT // 2, text_size)
+    ## Calculate text position to center it
+    #text_width = display.measure_text(event_text, text_size)
+    #display.text(event_text, (WIDTH - text_width) // 2, HEIGHT // 2, text_size)
 
     #display.update()
 
