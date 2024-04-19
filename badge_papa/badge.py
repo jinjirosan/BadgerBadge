@@ -1,7 +1,7 @@
 # Badge Platform papa - hardware platform v3.0
 # (2022-2024)
 #
-# badge.py : v2.6.2-refactor 0.0.2
+# badge.py : v2.6.3-refactor 0.0.2
 
 import time
 import badger2040
@@ -273,6 +273,7 @@ def draw_work_badge():
 
     work_text = "MDG InfoSec"
     work_name_text = "Ray Flinkerbusch"
+    work_role_text = "Security Architect"
     work_slogan_text = "SED'QUIS CUSTODIET IPSOS CUSTODES"
 
     # Start with a reasonable size for the main text and decrease until it fits
@@ -298,8 +299,23 @@ def draw_work_badge():
     # Calculate position for the name text to align it with the right end of the work_text
     name_text_width = display.measure_text(work_name_text, name_text_size)
     name_text_x = text_x + text_width - name_text_width  # Align to the right end of the work_text
-    name_text_y = text_y + 20  # Positioned 20 pixels below the work_text
+    name_text_y = text_y + 30  # Positioned 20 pixels below the work_text
     display.text(work_name_text, name_text_x, name_text_y, name_text_size)
+
+    # Draw the role text with a black background
+    role_text_size = name_text_size  # Same size as name text
+    role_text_width = display.measure_text(work_role_text, role_text_size)
+    role_text_x = name_text_x  # Align with the name text
+    role_text_y = name_text_y + 15  # Positioned 15 pixels below the name text
+
+    # Black background for role text
+    display.pen(0)  # Set pen to black for background
+    display.rectangle(role_text_x, role_text_y - 5, WIDTH - role_text_x, 12)  # Rectangle height approx to text size
+
+    # White text for the role
+    display.pen(15)  # Set pen to white for text
+    display.thickness(1)  # Less thickness
+    display.text(work_role_text, role_text_x, role_text_y, role_text_size)
 
     # Settings for the slogan text
     slogan_text_size = name_text_size  # Same size as name text
@@ -311,8 +327,9 @@ def draw_work_badge():
 
     slogan_text_width = display.measure_text(work_slogan_text, slogan_text_size)
     slogan_text_x = (WIDTH - slogan_text_width) // 2  # Center slogan text horizontally
-    slogan_text_y = HEIGHT - 5  # Positioned 20 pixels above the bottom of the display
+    slogan_text_y = HEIGHT - 6  # Positioned 20 pixels above the bottom of the display
 
+    display.pen(0)  # Set pen to black
     display.text(work_slogan_text, slogan_text_x, slogan_text_y, slogan_text_size)
     
     #display.update()
