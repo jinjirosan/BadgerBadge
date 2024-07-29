@@ -11,12 +11,12 @@ MEDICAL_FILE = "medical.txt"
 
 # Default medical information text
 DEFAULT_TEXT = """Name: John Doe
-Date of Birth: 01-06-1974
+Date of Birth: 01-01-1950
 Blood Type: B+
 Allergies: None
 Medications: None
-Length: 185 cm
-Weight: 81 kg
+Length: 175 cm
+Weight: 70 kg
 Donor: No
 Current year: 2024
 """
