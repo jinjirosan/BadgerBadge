@@ -7,3 +7,7 @@ badge_eva/test_scratch*
 _sources/
 .DS_Store
 badge_eva/badge-image-QR.bin
+badge_eva/badge-image_QR.bin
+badge_papa/badge-personal-image_qr.bin
+badge_papa/badge-personal-image.bin
+badge_papa/badge-work-image.bin
