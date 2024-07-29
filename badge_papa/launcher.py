@@ -72,7 +72,7 @@ examples = [
     ("_elevation", 12),
     ("_focus", 0),
     ("_medical", 8),
-    ("_help", 2),
+    ("_help", 1),
     ("_comms", 10),
     ("_battery", 6)
 ]
