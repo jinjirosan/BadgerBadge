@@ -1,7 +1,7 @@
 # Badge Platform Eva - hardware platform v3.0
 # (2022) Voor m'n lieve guppie
 #
-# launcher.py : v3.1-refactor 1.3
+# launcher.py : v3.2-refactor 0.0.1
 
 import gc
 import time
@@ -57,8 +57,8 @@ badger_os.state_load("launcher", state)
 display.invert(state["inverted"])
  
 icons = bytearray(launchericons.data())
-icons_width = 576  # original size
-#icons_width = 832
+#icons_width = 576  # original size
+icons_width = 832
 #icons_width = 640
 
 # the array is filename.py , icon number to display
@@ -67,10 +67,12 @@ examples = [
     ("_badge", 5),
     ("_list", 4),
     ("_image", 3),
-    ("_timer", 0),
-    ("_temp", 2),
-    ("_elevation", 1),
-    ("_focus", 7)
+    ("_timer", 11),
+    ("_temp", 9),
+    ("_elevation", 12),
+    ("_focus", 0),
+    ("_medical", 8),
+    ("_comms", 10)
 ]
 
 font_sizes = (0.5, 0.7, 0.9)
