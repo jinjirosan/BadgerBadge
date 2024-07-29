@@ -1,7 +1,7 @@
 # Badge Platform Eva - hardware platform v3.0
 # (2022) Voor m'n lieve guppie
 #
-# launcher.py : v3.3-refactor 0.0.1
+# launcher.py : v3.4-refactor 0.0.1
 
 import gc
 import time
@@ -72,7 +72,7 @@ examples = [
     ("_elevation", 12),
     ("_focus", 0),
     ("_medical", 8),
-    ("_SOS", 1),
+    ("_help", 1),
     ("_comms", 10)
 ]
 
