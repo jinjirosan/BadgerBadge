@@ -33,7 +33,7 @@ The SigFox module will be used to send periodic messages back on status. Added b
 ### The (rough) area of the badge location
 
 ![elevation](https://github.com/jinjirosan/BadgerBadge/blob/main/images/im_17.png)
-###### --> image: The Help app, showing important contacts and their phone numbers
+###### --> image: We took the badge on a weekendtrip to Antwerpen Zoo
 
 ### Images of the GUI and functions
 
