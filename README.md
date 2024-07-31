@@ -11,6 +11,9 @@ Well almost, I added a couple of things to make it practical for my purposes.  T
 - Temp : displays the current temperature, humidity, pressure and shows descriptions on the weather
 - Elevation : measure height in meters and floors
 - Focus : a Pomodoro-like timer in traffic light. Presets on Red time (focus, don't disturb) and Orange (can whisper, be slightly distracted) time
+- Medical : shows a quick overview of essentials such as Blood Type, Weight, Height, Age, Allergies and Medications
+- Help/SOS : displays a list of emergency contacts and numbers (used to have this on a laminated card)
+- Comms : an experimental app using the Sigfox bi-directional messages capability to also display downlink messages
 
 The badge is now on Hardware Prototype Platform v3
 
@@ -26,6 +29,11 @@ The badge is now on Hardware Prototype Platform v3
 | Antenna uFL 850Mhz | flat sticker antenna      |Smallest, flattest antenna I could find   |
 
 The SigFox module will be used to send periodic messages back on status. Added bonus is that each received SigFox message has a (very broad) position indication which covers all of Europe. You get a rough idea where the badge is (search area as large as the City of The Hague).
+
+### The (rough) area of the badge location
+
+![elevation](https://github.com/jinjirosan/BadgerBadge/blob/main/images/im_17.png)
+###### --> image: The Help app, showing important contacts and their phone numbers
 
 ### Images of the GUI and functions
 
@@ -60,7 +68,7 @@ The SigFox module will be used to send periodic messages back on status. Added b
 ###### --> image: The focus app, countdown and traffic light change
 
 ![elevation](https://github.com/jinjirosan/BadgerBadge/blob/main/images/im_13.jpg)
-###### --> image: menu items : Focus, Medical and SOS
+###### --> image: menu items : Focus, Medical and Help/SOS
 
 ![elevation](https://github.com/jinjirosan/BadgerBadge/blob/main/images/im_15.jpg)
 ###### --> image: The Medical app, quick overview of essential info (showing fake data here)
