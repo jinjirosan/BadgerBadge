@@ -35,7 +35,7 @@ The SigFox module will be used to send periodic messages back on status. Added b
 ![badge](https://github.com/jinjirosan/BadgerBadge/blob/main/images/im_3.jpg)
 ###### --> image: The badge itself
 
-![list](https://github.com/jinjirosan/BadgerBadge/blob/main/images/im_7.jpg)
+![list](https://github.com/jinjirosan/BadgerBadge/blob/main/images/im_16.jpg)
 ###### --> image: The list
 
 ![GUI](https://github.com/jinjirosan/BadgerBadge/blob/main/images/im_8.jpg)
@@ -47,7 +47,7 @@ The SigFox module will be used to send periodic messages back on status. Added b
 ![timer](https://github.com/jinjirosan/BadgerBadge/blob/main/images/im_9.jpg)
 ###### --> image: The timer app showing the countdown
 
-![temp](https://github.com/jinjirosan/BadgerBadge/blob/main/images/im_4.jpg)
+![temp](https://github.com/jinjirosan/BadgerBadge/blob/main/images/im_12.jpg)
 ###### --> image: the temperature app
 
 ![elevation](https://github.com/jinjirosan/BadgerBadge/blob/main/images/im_5.jpg)
@@ -58,3 +58,13 @@ The SigFox module will be used to send periodic messages back on status. Added b
 
 ![elevation](https://github.com/jinjirosan/BadgerBadge/blob/main/images/im_11.jpg)
 ###### --> image: The focus app, countdown and traffic light change
+
+![elevation](https://github.com/jinjirosan/BadgerBadge/blob/main/images/im_13.jpg)
+###### --> image: menu items : Focus, Medical and SOS
+
+![elevation](https://github.com/jinjirosan/BadgerBadge/blob/main/images/im_15.jpg)
+###### --> image: The Medical app, quick overview of essential info (showing fake data here)
+
+![elevation](https://github.com/jinjirosan/BadgerBadge/blob/main/images/im_14.png)
+###### --> image: The Help app, showing important contacts and their phone numbers
+
