@@ -28,7 +28,7 @@ The badge is now on Hardware Prototype Platform v3
 | Communications SigFox 868Mhz	 | LPWAN SigFox Node     | used to send 140 12-byte daily messages   |
 | Antenna uFL 850Mhz | flat sticker antenna      |Smallest, flattest antenna I could find   |
 
-The SigFox module will be used to send periodic messages back on status. Added bonus is that each received SigFox message has a (very broad) position indication which covers all of Europe. You get a rough idea where the badge is (search area as large as the City of The Hague).
+The SigFox module will be used to send periodic messages back on status. Added bonus is that each received SigFox message has a (very broad) position indication which covers all of Europe. You get a rough idea where the badge is.
 
 ### The (rough) area of the badge location
 
