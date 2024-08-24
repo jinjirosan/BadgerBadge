@@ -35,6 +35,9 @@ The SigFox module will be used to send periodic messages back on status. Added b
 ![elevation](https://github.com/jinjirosan/BadgerBadge/blob/main/images/im_17.png)
 ###### --> image: We took the badge on a weekendtrip to Antwerpen Zoo
 
+![elevation](https://github.com/jinjirosan/BadgerBadge/blob/main/images/im_18.png)
+###### --> image: We took the badge on a trip to Berlin
+
 ### Images of the GUI and functions
 
 ![GUI](https://github.com/jinjirosan/BadgerBadge/blob/main/images/im_2.jpg)
