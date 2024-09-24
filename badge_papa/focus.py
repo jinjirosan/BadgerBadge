@@ -1,7 +1,7 @@
 # Badge Platform papa - hardware platform v3.0
 # (2022-2024)
 #
-# focus.py : v3.1-refactor 0.0.0 (Operational release!) - fork eva_badge v3.0-refactor 0.7.1
+# focus.py : v3.2-refactor 0.0.0 (Operational release!) - fork eva_badge v3.0-refactor 0.7.1
 
 import badger2040
 import badger_os
@@ -183,6 +183,54 @@ def draw_focus_framework():
 
     display.update()
 
+# Draw the focus framework - traffic light countdown
+def draw_end_screen():
+    #display.update_speed(badger2040.UPDATE_FAST)
+    display.led(128)
+    display.pen(15)
+    display.clear()
+    # Set display parameters
+    display.pen(15)
+    display.font("sans")
+    display.thickness(2)
+    # black box on top
+    display.pen(0)
+    display.rectangle(160, 0, 296, 22)
+    display.pen(15)
+    display.text(FOCUS_TITLE, 165, 10, TITLE_SIZE)
+    display.pen(0)
+    display.line(160, 39, 296, 39) # top
+    display.line(182, 80, 296, 80) # bottom
+    # selected focus parameters
+    display.pen(0)
+    display.thickness(1)
+    display.font("bitmap8")
+    
+    # Draw the trafficlight
+    draw_light_red()
+    draw_light_orange()
+    draw_light_green()
+
+    if state["selected_focus"] == 0:
+        draw_focus_setting1()   
+    if state["selected_focus"] == 1:
+        draw_focus_setting2()
+    if state["selected_focus"] == 2:
+        draw_focus_setting3()   
+    if state["selected_focus"] == 3:
+        draw_focus_setting4()
+
+    # restart button section
+    display.pen(0) # pen to black
+    display.rectangle(243, 116, 41, 12) # restart button rectangle
+    display.pen(15) # inverse pen to white
+    display.thickness(1) # ensure thinkness of pen is 1
+    display.font("bitmap8") # set font to bitmap for readability small size
+    display.text("restart", 247, 118, 0.7) # start button text +7px
+    display.font("sans") # return to default font, maybe change this to font selection at start of each function
+        
+    display.update()
+
 
 # Draw the menu
 def draw_focus_menu():
@@ -293,6 +341,7 @@ def draw_light_green():
     display.font("sans")
     display.thickness(1)
     display.text("G", 40, 105, 0.7)
+    
 
 def draw_focus_setting1():
     # duration indicator 60-30
@@ -861,7 +910,7 @@ while True:
         draw_light_orange_fill = False
         draw_light_green_fill = True
         draw_light_green()
-        draw_focus_framework()
+        draw_end_screen()
         display.led(0)
 
     if changed:
