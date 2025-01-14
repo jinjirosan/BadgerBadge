@@ -10,169 +10,7 @@ import os
 from machine import UART
 from machine import Pin
 
-# Initialize serial Port
-lora = UART(0, baudrate=9600, tx=Pin(0), rx=Pin(1))
-
-# Global Constants
-WIDTH = badger2040.WIDTH
-HEIGHT = badger2040.HEIGHT
-
-LEFT_PADDING = 5
-BUTTON_PRESS_DELAY = 0.2
-MENU_FONT_SIZE = 0.5  # Fixed font size for menu
-
-# Global Variables for messages
-messages = []
-message_identifiers = ["AA", "BB", "CC", "DD", "EE"]  # Two-letter identifiers for each message
-current_message_index = 0
-current_downlink_message = None
-selected_message_index = 0
-is_menu_active = False
-is_downlink_displayed = False  # Track if downlink message is being displayed
-selected_message = None  # Variable to store the selected message
-selected_identifier = None  # Variable to store the identifier to be sent
-
-# ------------------------------
-#      Utility functions
-# ------------------------------
-
-def is_on_battery():
-    return not os.uname().machine.startswith("USB")
-
-def turn_on_led():
-    display.led(128)  # Set LED brightness to mid-level
-
-def turn_off_led():
-    display.led(0)    # Turn off the LED
-
-def fit_text(text, max_width, min_size=0.5, max_size=2.0):
-    """Adjusts the font size so the text fits within max_width."""
-    size = max_size
-    while size >= min_size:
-        if display.measure_text(text, size) <= max_width:
-            return size
-        size -= 0.1
-    return min_size
-
-def bytes_to_hex(b):
-    """Convert bytes or string to hex string for MicroPython"""
-    if isinstance(b, str):
-        b = b.encode('utf-8')
-    return ''.join('{:02x}'.format(x) for x in b)
-
-# ------------------------------
-#      Display Functions
-# ------------------------------
-
-def display_message(message):
-    display.pen(15)
-    display.clear()
-    display.pen(0)
-    display.font("sans")
-    display.thickness(2)
-    size = fit_text(message, WIDTH - 2 * LEFT_PADDING)
-    display.text(message, LEFT_PADDING, HEIGHT // 2, size)
-    display.update()
-
-def display_main_screen():
-    """Update main screen with clearer message display"""
-    display.pen(15)
-    display.clear()
-    display.pen(0)
-    display.font("sans")
-    
-    # Draw title - moved down slightly and restored original size
-    display.thickness(4)
-    display.text("COMMS", LEFT_PADDING, 25, 1.8)
-
-    # Display currently selected message with better formatting
-    display.thickness(2)
-    if selected_message:
-        # Show message preview with identifier
-        preview_text = f"{selected_identifier}: {selected_message}"
-        # Fit text and handle long messages
-        size = fit_text(preview_text, WIDTH - 2 * LEFT_PADDING, min_size=0.4, max_size=0.7)
-        display.text(preview_text, LEFT_PADDING, HEIGHT // 2, size)  # Centered vertically
-    else:
-        display.text("No message selected", LEFT_PADDING, HEIGHT // 2, 0.6)
-    
-    # Draw button labels with original alignment
-    display.thickness(1)
-    display.text("Send", LEFT_PADDING, HEIGHT - 10, 0.5)
-    display.text("Check", WIDTH // 2 - 20, HEIGHT - 10, 0.5)
-    display.text("Text", WIDTH - 40, HEIGHT - 10, 0.5)
-    
-    display.update()
-    turn_off_led()
-
-def show_message_menu():
-    """Enhanced message menu with better visual feedback"""
-    logger.debug(f"Showing menu - Current selection: {badge_state.selected_index}")
-    display.pen(15)
-    display.clear()
-    display.pen(0)
-    display.font("sans")
-    
-    # Draw title - moved higher up
-    display.thickness(2)
-    display.text("Select Message", LEFT_PADDING, 10, 0.7)  # Moved from 20 to 10
-    
-    # Draw messages with better spacing
-    y_position = 35  # Start messages lower (was 40)
-    for i, message in enumerate(messages):
-        # Format with ID and message
-        menu_text = f"{message_identifiers[i]}: {message}"
-        if i == badge_state.selected_index:
-            # Highlight selected item - made taller to fully cover text
-            display.pen(0)
-            display.rectangle(0, y_position - 4, WIDTH, 16)  # Adjusted height and offset
-            display.pen(15)
-            display.text(menu_text, LEFT_PADDING + 5, y_position, MENU_FONT_SIZE)
-            logger.debug(f"Highlighting menu item {i}: {menu_text}")
-        else:
-            display.pen(0)
-            display.text(menu_text, LEFT_PADDING + 5, y_position, MENU_FONT_SIZE)
-        y_position += 17  # Slightly reduced spacing (was 18)
-    
-    # Draw navigation hints with original alignment
-    display.pen(0)
-    display.thickness(1)
-    display.text("Info", LEFT_PADDING, HEIGHT - 10, 0.5)
-    display.text("Select", WIDTH - 45, HEIGHT - 10, 0.5)
-    
-    display.update()
-    turn_off_led()
-
-def display_downlink_message(message):
-    """Display the downlink message with proper alignment."""
-    display.pen(15)
-    display.clear()
-    display.pen(0)
-    display.font("sans")
-    display.thickness(2)
-    size = fit_text(message, WIDTH - 2 * LEFT_PADDING)
-    display.text(message, LEFT_PADDING, HEIGHT // 2 - 5, size)  # Adjusted position for better alignment
-    display.text("Clear", WIDTH // 2 - 20, HEIGHT - 20, 0.5)  # Adjusted position to avoid overlap
-    display.update()
-
-def update_fetch_label(status):
-    """Update the Fetch button label based on the current status."""
-    if status == "checking":
-        display.pen(15)
-        display.rectangle(WIDTH // 2 - 20, HEIGHT - 15, 50, 10)  # Clear existing label area
-        display.pen(0)
-        display.text("Checking", WIDTH // 2 - 20, HEIGHT - 15, 0.5)
-    elif status == "fetch":
-        display.pen(15)
-        display.rectangle(WIDTH // 2 - 20, HEIGHT - 15, 50, 10)  # Clear existing label area
-        display.pen(0)
-        display.text("Fetch", WIDTH // 2 - 20, HEIGHT - 15, 0.5)
-    display.update()
-
-# ------------------------------
-#        Sigfox functions
-# ------------------------------
-
+# 2. Logger class and initialization
 class SimpleLogger:
     LEVELS = {
         'DEBUG': 10,
@@ -222,10 +60,247 @@ class SimpleLogger:
     def critical(self, message):
         self._log('CRITICAL', message)
 
-# Initialize logger
+# Initialize logger before it's used by any other code
 logger = SimpleLogger('badge_papa')
 
-# Add Sigfox command constants
+# 3. Constants
+WIDTH = badger2040.WIDTH
+HEIGHT = badger2040.HEIGHT
+LEFT_PADDING = 5
+BUTTON_PRESS_DELAY = 0.2
+MENU_FONT_SIZE = 0.5
+MENU_REGION = (0, 30, WIDTH, HEIGHT - 40)
+STATUS_REGION = (0, HEIGHT // 2 - 15, WIDTH, 30)
+BUTTON_REGION = (0, HEIGHT - 20, WIDTH, 20)
+
+# 4. State Management Classes
+class DisplayStates:
+    MAIN_SCREEN = "main"
+    MESSAGE_MENU = "menu"
+    SENDING = "sending"
+    DOWNLINK = "downlink"
+
+class SystemMonitor:
+    def __init__(self):
+        self.metrics = {
+            'message_sends': 0,
+            'failed_sends': 0,
+            'downlink_checks': 0,
+            'state_changes': 0,
+            'errors': []
+        }
+        self.max_stored_errors = 10
+        logger.info("System monitor initialized")
+
+    def log_metric(self, metric_name, value=1):
+        if metric_name in self.metrics:
+            self.metrics[metric_name] += value
+            logger.debug(f"Metric {metric_name}: {self.metrics[metric_name]}")
+        
+    def log_error(self, error_message):
+        timestamp = time.time()
+        error_entry = (timestamp, error_message)
+        self.metrics['errors'].append(error_entry)
+        if len(self.metrics['errors']) > self.max_stored_errors:
+            self.metrics['errors'].pop(0)
+        logger.error(f"Error logged: {error_message}")
+
+    def get_health_report(self):
+        total_sends = self.metrics['message_sends']
+        success_rate = 0 if total_sends == 0 else (
+            (total_sends - self.metrics['failed_sends']) / total_sends
+        )
+        report = {
+            'success_rate': success_rate,
+            'total_operations': total_sends,
+            'downlink_checks': self.metrics['downlink_checks'],
+            'recent_errors': self.metrics['errors'][-5:]
+        }
+        logger.debug(f"Health report generated: {report}")
+        return report
+
+class BadgeState:
+    def __init__(self):
+        self.current_state = DisplayStates.MAIN_SCREEN
+        self.selected_message = None
+        self.selected_identifier = None
+        self.is_downlink_displayed = False
+        self.selected_index = 0
+        logger.info("Badge state initialized")
+
+    def transition_to(self, new_state):
+        logger.debug(f"State transition: {self.current_state} -> {new_state}")
+        self.current_state = new_state
+        system_monitor.log_metric('state_changes')
+
+    def select_message(self, message, identifier):
+        self.selected_message = message
+        self.selected_identifier = identifier
+        logger.info(f"Message selected: {message} with ID: {identifier}")
+
+# 5. Initialize system monitor and badge state
+system_monitor = SystemMonitor()
+badge_state = BadgeState()
+
+# 6. Initialize hardware
+display = badger2040.Badger2040()
+display.led(128)
+display.update_speed(badger2040.UPDATE_NORMAL)
+
+lora = UART(0, baudrate=9600, tx=Pin(0), rx=Pin(1))
+
+# Global Variables for messages
+messages = []
+message_identifiers = ["AA", "BB", "CC", "DD", "EE"]  # Two-letter identifiers for each message
+current_message_index = 0
+current_downlink_message = None
+selected_message_index = 0
+is_menu_active = False
+is_downlink_displayed = False  # Track if downlink message is being displayed
+selected_message = None  # Variable to store the selected message
+selected_identifier = None  # Variable to store the identifier to be sent
+
+# Add these constants at the top with other constants
+MENU_REGION = (0, 30, WIDTH, HEIGHT - 40)  # Region for menu items
+STATUS_REGION = (0, HEIGHT // 2 - 15, WIDTH, 30)  # Region for status messages
+BUTTON_REGION = (0, HEIGHT - 20, WIDTH, 20)  # Region for button labels
+
+# ------------------------------
+#      Display Functions
+# ------------------------------
+
+def is_on_battery():
+    return not os.uname().machine.startswith("USB")
+
+def turn_on_led():
+    display.led(128)  # Set LED brightness to mid-level
+
+def turn_off_led():
+    display.led(0)    # Turn off the LED
+
+def fit_text(text, max_width, min_size=0.5, max_size=2.0):
+    """Adjusts the font size so the text fits within max_width."""
+    size = max_size
+    while size >= min_size:
+        if display.measure_text(text, size) <= max_width:
+            return size
+        size -= 0.1
+    return min_size
+
+def bytes_to_hex(b):
+    """Convert bytes or string to hex string for MicroPython"""
+    if isinstance(b, str):
+        b = b.encode('utf-8')
+    return ''.join('{:02x}'.format(x) for x in b)
+
+def display_message(message):
+    display.pen(15)
+    display.clear()
+    display.pen(0)
+    display.font("sans")
+    display.thickness(2)
+    size = fit_text(message, WIDTH - 2 * LEFT_PADDING)
+    display.text(message, LEFT_PADDING, HEIGHT // 2, size)
+    display.update()
+
+def display_main_screen():
+    """Display the main screen"""
+    display.update_speed(badger2040.UPDATE_NORMAL)
+    display.pen(15)
+    display.clear()
+    display.pen(0)
+    display.font("sans")
+    
+    # Draw title
+    display.thickness(3)
+    display.text("COMMS", LEFT_PADDING, 25, 1.8)
+    
+    # Display currently selected message
+    display.thickness(2)
+    if selected_message:
+        preview_text = f"{selected_identifier}: {selected_message}"
+        size = fit_text(preview_text, WIDTH - 2 * LEFT_PADDING, min_size=0.4, max_size=0.7)
+        display.text(preview_text, LEFT_PADDING, HEIGHT // 2, size)
+    else:
+        display.text("No message selected", LEFT_PADDING, HEIGHT // 2, 0.6)
+    
+    # Draw button labels
+    display.thickness(1)
+    display.text("Send", LEFT_PADDING + 20, HEIGHT - 10, 0.5)
+    display.text("Check", WIDTH // 2 - 20, HEIGHT - 10, 0.5)
+    display.text("Menu", WIDTH - 55, HEIGHT - 10, 0.5)
+    
+    display.update()
+    turn_off_led()
+
+def show_message_menu():
+    """Display the message menu"""
+    logger.debug(f"Showing menu - Current selection: {badge_state.selected_index}")
+    
+    # Use fast update for menu navigation
+    display.update_speed(badger2040.UPDATE_FAST)
+    display.pen(15)
+    display.clear()
+    display.pen(0)
+    display.font("sans")
+    
+    # Draw title - higher up to avoid overlap
+    display.thickness(2)
+    display.text("Select Message", LEFT_PADDING, 10, 0.7)
+    
+    # Draw messages with proper spacing
+    y_position = 35  # Start lower to avoid title overlap
+    for i, message in enumerate(messages):
+        menu_text = f"{message_identifiers[i]}: {message}"
+        if i == badge_state.selected_index:
+            display.pen(0)
+            display.rectangle(0, y_position - 4, WIDTH, 13)  # Taller highlight
+            display.pen(15)
+            display.text(menu_text, LEFT_PADDING + 5, y_position, MENU_FONT_SIZE)
+        else:
+            display.pen(0)
+            display.text(menu_text, LEFT_PADDING + 5, y_position, MENU_FONT_SIZE)
+        y_position += 17  # Consistent spacing between items
+    
+    # Draw navigation hints - moved up to avoid overlap with last menu item
+    display.pen(0)
+    display.thickness(1)
+    display.text("Info", LEFT_PADDING + 24, HEIGHT - 10, 0.5)
+    display.text("Select", WIDTH - 57, HEIGHT - 10, 0.5)
+    
+    display.update()
+    turn_off_led()
+
+def display_downlink_message(message):
+    """Display the downlink message with proper alignment."""
+    display.pen(15)
+    display.clear()
+    display.pen(0)
+    display.font("sans")
+    display.thickness(2)
+    size = fit_text(message, WIDTH - 2 * LEFT_PADDING)
+    display.text(message, LEFT_PADDING, HEIGHT // 2 - 5, size)  # Adjusted position for better alignment
+    display.text("Clear", WIDTH // 2 - 20, HEIGHT - 20, 0.5)  # Adjusted position to avoid overlap
+    display.update()
+
+def update_fetch_label(status):
+    """Update the Fetch button label based on the current status."""
+    if status == "checking":
+        display.pen(15)
+        display.rectangle(WIDTH // 2 - 20, HEIGHT - 10, 50, 10)  # Clear existing label area
+        display.pen(0)
+        display.text("Checking", WIDTH // 2 - 20, HEIGHT - 10, 0.5)
+    elif status == "fetch":
+        display.pen(15)
+        display.rectangle(WIDTH // 2 - 20, HEIGHT - 10, 50, 10)  # Clear existing label area
+        display.pen(0)
+        display.text("Fetch", WIDTH // 2 - 20, HEIGHT - 10, 0.5)
+    display.update()
+
+# ------------------------------
+#        Sigfox functions
+# ------------------------------
+
 class SigfoxCommands:
     RESET_CHANNELS = "AT$RC"
     SEND_FRAME = "AT$SF"
@@ -559,11 +634,6 @@ def select_message():
 #        Program setup
 # ------------------------------
 
-# Create a new Badger and set it to update NORMAL
-display = badger2040.Badger2040()
-display.led(128)
-display.update_speed(badger2040.UPDATE_NORMAL)
-
 # Load messages from comms.txt
 try:
     with open("comms.txt", "r") as f:
@@ -581,74 +651,6 @@ display_main_screen()
 # ------------------------------
 #       Main program
 # ------------------------------
-
-class DisplayStates:
-    MAIN_SCREEN = "main"
-    MESSAGE_MENU = "menu"
-    SENDING = "sending"
-    DOWNLINK = "downlink"
-
-class BadgeState:
-    def __init__(self):
-        self.current_state = DisplayStates.MAIN_SCREEN
-        self.selected_message = None
-        self.selected_identifier = None
-        self.is_downlink_displayed = False
-        self.selected_index = 0  # Track currently selected menu item
-        logger.info("Badge state initialized")
-
-    def transition_to(self, new_state):
-        logger.debug(f"State transition: {self.current_state} -> {new_state}")
-        self.current_state = new_state
-        system_monitor.log_metric('state_changes')
-
-    def select_message(self, message, identifier):
-        self.selected_message = message
-        self.selected_identifier = identifier
-        logger.info(f"Message selected: {message} with ID: {identifier}")
-
-class SystemMonitor:
-    def __init__(self):
-        self.metrics = {
-            'message_sends': 0,
-            'failed_sends': 0,
-            'downlink_checks': 0,
-            'state_changes': 0,
-            'errors': []
-        }
-        self.max_stored_errors = 10
-        logger.info("System monitor initialized")
-
-    def log_metric(self, metric_name, value=1):
-        if metric_name in self.metrics:
-            self.metrics[metric_name] += value
-            logger.debug(f"Metric {metric_name}: {self.metrics[metric_name]}")
-        
-    def log_error(self, error_message):
-        timestamp = time.time()
-        error_entry = (timestamp, error_message)
-        self.metrics['errors'].append(error_entry)
-        if len(self.metrics['errors']) > self.max_stored_errors:
-            self.metrics['errors'].pop(0)
-        logger.error(f"Error logged: {error_message}")
-
-    def get_health_report(self):
-        total_sends = self.metrics['message_sends']
-        success_rate = 0 if total_sends == 0 else (
-            (total_sends - self.metrics['failed_sends']) / total_sends
-        )
-        report = {
-            'success_rate': success_rate,
-            'total_operations': total_sends,
-            'downlink_checks': self.metrics['downlink_checks'],
-            'recent_errors': self.metrics['errors'][-5:]
-        }
-        logger.debug(f"Health report generated: {report}")
-        return report
-
-# Initialize state management and monitoring
-badge_state = BadgeState()
-system_monitor = SystemMonitor()
 
 # Add this helper function for button debugging
 def check_button_state():
