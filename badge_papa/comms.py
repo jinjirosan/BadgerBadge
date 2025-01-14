@@ -643,8 +643,8 @@ except OSError:
     print("Failed to read comms.txt file")
     messages = ["Message 1", "Message 2", "Message 3", "Message 4", "Message 5"]  # Default messages
 
-# Ensure the number of identifiers matches the number of messages
-message_identifiers = message_identifiers[:len(messages)]
+# Generate numerical identifiers (01, 02, etc.) based on number of messages
+message_identifiers = [f"{i+1:02d}" for i in range(len(messages))]  # Creates ["01", "02", "03", etc.]
 
 # Draw the main screen initially
 display_main_screen()
