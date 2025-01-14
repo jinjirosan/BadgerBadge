@@ -81,9 +81,9 @@ def display_main_screen():
     display.pen(0)
     display.font("sans")
     
-    # Draw title
+    # Draw title - moved down slightly and restored original size
     display.thickness(4)
-    display.text("COMMS", LEFT_PADDING, 20, 2.0)
+    display.text("COMMS", LEFT_PADDING, 25, 1.8)
 
     # Display currently selected message with better formatting
     display.thickness(2)
@@ -91,16 +91,16 @@ def display_main_screen():
         # Show message preview with identifier
         preview_text = f"{selected_identifier}: {selected_message}"
         # Fit text and handle long messages
-        size = fit_text(preview_text, WIDTH - 2 * LEFT_PADDING, min_size=0.4)
-        display.text(preview_text, LEFT_PADDING, HEIGHT // 2 - 10, size)
+        size = fit_text(preview_text, WIDTH - 2 * LEFT_PADDING, min_size=0.4, max_size=0.7)
+        display.text(preview_text, LEFT_PADDING, HEIGHT // 2, size)  # Centered vertically
     else:
-        display.text("No message selected", LEFT_PADDING, HEIGHT // 2 - 10, 0.8)
+        display.text("No message selected", LEFT_PADDING, HEIGHT // 2, 0.6)
     
-    # Draw button labels with icons and better spacing
+    # Draw button labels with original alignment
     display.thickness(1)
-    display.text("⬆ Send", LEFT_PADDING, HEIGHT - 30, 0.6)
-    display.text("⟲ Check", WIDTH // 2 - 25, HEIGHT - 30, 0.6)
-    display.text("☰ Menu", WIDTH - 60, HEIGHT - 30, 0.6)
+    display.text("Send", LEFT_PADDING, HEIGHT - 10, 0.5)
+    display.text("Check", WIDTH // 2 - 20, HEIGHT - 10, 0.5)
+    display.text("Text", WIDTH - 40, HEIGHT - 10, 0.5)
     
     display.update()
     turn_off_led()
@@ -113,46 +113,46 @@ def show_message_menu():
     display.pen(0)
     display.font("sans")
     
-    # Draw title
+    # Draw title - moved higher up
     display.thickness(2)
-    display.text("Select Message", LEFT_PADDING, 10, 1.0)
+    display.text("Select Message", LEFT_PADDING, 10, 0.7)  # Moved from 20 to 10
     
-    # Draw messages
-    y_position = 35
+    # Draw messages with better spacing
+    y_position = 35  # Start messages lower (was 40)
     for i, message in enumerate(messages):
         # Format with ID and message
         menu_text = f"{message_identifiers[i]}: {message}"
         if i == badge_state.selected_index:
-            # Highlight selected item
+            # Highlight selected item - made taller to fully cover text
             display.pen(0)
-            display.rectangle(0, y_position - 2, WIDTH, 15)
+            display.rectangle(0, y_position - 4, WIDTH, 16)  # Adjusted height and offset
             display.pen(15)
             display.text(menu_text, LEFT_PADDING + 5, y_position, MENU_FONT_SIZE)
             logger.debug(f"Highlighting menu item {i}: {menu_text}")
         else:
             display.pen(0)
             display.text(menu_text, LEFT_PADDING + 5, y_position, MENU_FONT_SIZE)
-        y_position += 20
+        y_position += 17  # Slightly reduced spacing (was 18)
     
-    # Draw navigation hints
+    # Draw navigation hints with original alignment
     display.pen(0)
     display.thickness(1)
-    display.text("↑↓ Navigate", LEFT_PADDING, HEIGHT - 15, 0.5)
-    display.text("✓ Select", WIDTH - 50, HEIGHT - 15, 0.5)
+    display.text("Info", LEFT_PADDING, HEIGHT - 10, 0.5)
+    display.text("Select", WIDTH - 45, HEIGHT - 10, 0.5)
     
     display.update()
     turn_off_led()
 
 def display_downlink_message(message):
-    # Display the downlink message
+    """Display the downlink message with proper alignment."""
     display.pen(15)
     display.clear()
     display.pen(0)
     display.font("sans")
     display.thickness(2)
     size = fit_text(message, WIDTH - 2 * LEFT_PADDING)
-    display.text(message, LEFT_PADDING, HEIGHT // 2, size)
-    display.text("Clear", WIDTH // 2 - 20, HEIGHT - 15, 0.5)
+    display.text(message, LEFT_PADDING, HEIGHT // 2 - 5, size)  # Adjusted position for better alignment
+    display.text("Clear", WIDTH // 2 - 20, HEIGHT - 20, 0.5)  # Adjusted position to avoid overlap
     display.update()
 
 def update_fetch_label(status):
