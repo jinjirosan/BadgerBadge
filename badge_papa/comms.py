@@ -595,13 +595,7 @@ def send_predefined_message():
 def check_downlink_message():
     global current_downlink_message, is_downlink_displayed
     try:
-        turn_on_led()
-        # Show checking status
-        display.pen(15)
-        display.rectangle(WIDTH // 2 - 20, HEIGHT - 10, 50, 10)
-        display.pen(0)
-        display.text("Checking", WIDTH // 2 - 20, HEIGHT - 10, 0.5)
-        display.update()
+        turn_on_led()  # LED indicates checking activity
         
         response = sigfox.check_downlink()
         system_monitor.log_metric('downlink_checks')
