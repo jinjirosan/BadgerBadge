@@ -215,16 +215,32 @@ def display_main_screen():
     display.thickness(3)
     display.text("COMMS", LEFT_PADDING, 25, 1.8)
     
-    # Display currently selected message
-    display.thickness(2)
+    # Display last sent message status if exists
+    y_position = 50
     if selected_message:
+        display.thickness(1)
+        display.text("Sent:", LEFT_PADDING, y_position, 0.5)
+        
+        # Show the message details
         preview_text = f"{selected_identifier}: {selected_message}"
-        size = fit_text(preview_text, WIDTH - 2 * LEFT_PADDING, min_size=0.4, max_size=0.7)
-        display.text(preview_text, LEFT_PADDING, HEIGHT // 2, size)
-    else:
-        display.text("No message selected", LEFT_PADDING, HEIGHT // 2, 0.6)
+        size = fit_text(preview_text, WIDTH - 2 * LEFT_PADDING - 40, min_size=0.4, max_size=0.5)
+        display.text(preview_text, LEFT_PADDING + 40, y_position, size)
+        y_position += 30  # Space for separator line
     
-    # Draw button labels - removed Send, changed Menu to Choose
+    # Draw separator line if we have messages to separate
+    if selected_message and current_downlink_message:
+        display.thickness(1)
+        display.line(LEFT_PADDING, y_position - 10, WIDTH - LEFT_PADDING, y_position - 10)
+    
+    # Display received message if exists
+    if current_downlink_message:
+        display.thickness(1)
+        display.text("Received:", LEFT_PADDING, y_position, 0.5)
+        
+        size = fit_text(current_downlink_message, WIDTH - 2 * LEFT_PADDING - 40, min_size=0.4, max_size=0.5)
+        display.text(current_downlink_message, LEFT_PADDING + 65, y_position, size)
+    
+    # Draw button labels
     display.thickness(1)
     display.text("Check", WIDTH // 2 - 20, HEIGHT - 10, 0.5)
     display.text("Choose", WIDTH - 55, HEIGHT - 10, 0.5)
@@ -591,17 +607,11 @@ def check_downlink_message():
         system_monitor.log_metric('downlink_checks')
         
         if response:
-            # Show message with Return button
-            display.pen(15)
-            display.clear()
-            display.pen(0)
-            display.font("sans")
-            display.thickness(2)
-            size = fit_text(response, WIDTH - 2 * LEFT_PADDING)
-            display.text(response, LEFT_PADDING, HEIGHT // 2 - 5, size)
-            display.text("Return", WIDTH // 2 - 20, HEIGHT - 10, 0.5)
-            display.update()
-            is_downlink_displayed = True
+            # Store the received message and update display
+            current_downlink_message = response
+            display_message("Message Received")
+            time.sleep(1)
+            display_main_screen()
         else:
             display_message("No New Messages")
             time.sleep(2)
