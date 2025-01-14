@@ -459,62 +459,40 @@ class SigfoxComm:
             return None
 
     def send_message(self, identifier):
-        """Send message with retries and proper channel reset"""
         if not self.initialized:
             self.logger.error("Sigfox not properly initialized")
             return False
-            
-        MAX_RETRIES = 3
-        self.logger.info("Preparing to send message - ID: {}, Length: {} bytes, Hex: {}".format(
-            identifier, len(identifier), bytes_to_hex(identifier)))
         
-        # Check signal quality before sending (but don't fail if we can't get it)
-        signal = self._send_command("AT$QS?")
-        if signal:
-            if "ERROR" in signal:
-                self.logger.warning("Signal quality unavailable - continuing anyway")
-            else:
-                try:
-                    signal_dbm = int(signal)
-                    quality = 'Good' if signal_dbm > -100 else 'Poor'
-                    self.logger.info(f"Signal quality: {signal_dbm} dBm ({quality})")
-                except ValueError:
-                    self.logger.warning(f"Could not parse signal quality: {signal}")
-        
-        # Reset channels - continue even if it returns ERR_SET_STD_CONFIG_SET
-        reset_response = self._send_command(SigfoxCommands.RESET_CHANNELS, timeout=3)
-        if reset_response:
-            if "ERR_SET_STD_CONFIG_SET" in reset_response:
-                self.logger.debug("Channel reset returned expected error - continuing")
-            elif "OK" not in reset_response:
-                self.logger.warning(f"Unexpected channel reset response: {reset_response}")
-        else:
-            self.logger.warning("No response from channel reset - continuing anyway")
-
-        # Try sending with retries
-        for attempt in range(MAX_RETRIES):
-            self.logger.debug(f"Send attempt {attempt + 1}/{MAX_RETRIES}")
+        try:
+            msg_id = int(identifier)
+            msg_type = "HELP" if msg_id <= 3 else "INFO"
             
-            # Send the message
-            command = f"{SigfoxCommands.SEND_FRAME}={identifier}"
+            # Format payload
+            id_bytes = bytes([msg_id])
+            type_bytes = msg_type.encode()
+            msgid_bytes = bytes([msg_id])
+            
+            payload = bytes_to_hex(id_bytes + type_bytes + msgid_bytes)
+            self.logger.debug(f"Sending - ID: {msg_id}, Type: {msg_type}, MsgID: {msg_id}")
+            self.logger.debug(f"Payload hex: {payload}")
+            
+            command = f"{SigfoxCommands.SEND_FRAME}={payload}"
+            
+            # Send command and be honest about the response
             response = self._send_command(command, timeout=8)
-            
-            if response:
-                self.logger.debug(f"Raw response for attempt {attempt + 1}: {response}")
-                if "OK" in response:
-                    self.logger.info("Message sent successfully")
-                    return True
-                else:
-                    self.logger.warning(f"Send attempt {attempt + 1} failed: {response}")
+            if response is None:
+                self.logger.warning("No response from module, message may have been sent")
+                return "UNKNOWN"  # New return state for uncertain transmission
+            elif "OK" in response:
+                self.logger.info("Message confirmed sent")
+                return True
             else:
-                self.logger.warning(f"No response for attempt {attempt + 1}")
+                self.logger.error("Message failed to send")
+                return False
             
-            if attempt < MAX_RETRIES - 1:
-                self.logger.debug("Waiting before retry...")
-                time.sleep(2)
-                
-        self.logger.error("All send attempts failed")
-        return False
+        except Exception as e:
+            self.logger.error(f"Error sending message: {str(e)}")
+            return False
 
     def check_downlink(self):
         """Check for downlink messages with proper error handling"""
@@ -578,9 +556,13 @@ def send_predefined_message():
             display_message("No Message Selected")
             return
 
-        if sigfox.send_message(selected_identifier):
+        result = sigfox.send_message(selected_identifier)
+        if result is True:
             display_message("Message Sent")
             system_monitor.log_metric('message_sends')
+        elif result == "UNKNOWN":
+            display_message("Message Status Unknown")
+            system_monitor.log_metric('message_sends')  # Still count it as we see it in emails
         else:
             display_message("Send Failed")
             system_monitor.log_metric('failed_sends')
