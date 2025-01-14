@@ -224,11 +224,10 @@ def display_main_screen():
     else:
         display.text("No message selected", LEFT_PADDING, HEIGHT // 2, 0.6)
     
-    # Draw button labels
+    # Draw button labels - removed Send, changed Menu to Choose
     display.thickness(1)
-    display.text("Send", LEFT_PADDING + 20, HEIGHT - 10, 0.5)
     display.text("Check", WIDTH // 2 - 20, HEIGHT - 10, 0.5)
-    display.text("Menu", WIDTH - 55, HEIGHT - 10, 0.5)
+    display.text("Choose", WIDTH - 55, HEIGHT - 10, 0.5)
     
     display.update()
     turn_off_led()
@@ -237,7 +236,6 @@ def show_message_menu():
     """Display the message menu"""
     logger.debug(f"Showing menu - Current selection: {badge_state.selected_index}")
     
-    # Use fast update for menu navigation
     display.update_speed(badger2040.UPDATE_FAST)
     display.pen(15)
     display.clear()
@@ -249,52 +247,38 @@ def show_message_menu():
     display.text("Select Message", LEFT_PADDING, 10, 0.7)
     
     # Draw messages with proper spacing
-    y_position = 35  # Start lower to avoid title overlap
+    y_position = 35
     for i, message in enumerate(messages):
         menu_text = f"{message_identifiers[i]}: {message}"
         if i == badge_state.selected_index:
             display.pen(0)
-            display.rectangle(0, y_position - 4, WIDTH, 13)  # Taller highlight
+            display.rectangle(0, y_position - 4, WIDTH, 13)
             display.pen(15)
             display.text(menu_text, LEFT_PADDING + 5, y_position, MENU_FONT_SIZE)
         else:
             display.pen(0)
             display.text(menu_text, LEFT_PADDING + 5, y_position, MENU_FONT_SIZE)
-        y_position += 17  # Consistent spacing between items
+        y_position += 17
     
-    # Draw navigation hints - moved up to avoid overlap with last menu item
+    # Update button labels - changed Info to Back
     display.pen(0)
     display.thickness(1)
-    display.text("Info", LEFT_PADDING + 24, HEIGHT - 10, 0.5)
-    display.text("Select", WIDTH - 57, HEIGHT - 10, 0.5)
+    display.text("Back", LEFT_PADDING + 24, HEIGHT - 10, 0.5)
+    display.text("Send", WIDTH - 45, HEIGHT - 10, 0.5)
     
     display.update()
     turn_off_led()
 
 def display_downlink_message(message):
-    """Display the downlink message with proper alignment."""
+    """Display the downlink message with Return button."""
     display.pen(15)
     display.clear()
     display.pen(0)
     display.font("sans")
     display.thickness(2)
     size = fit_text(message, WIDTH - 2 * LEFT_PADDING)
-    display.text(message, LEFT_PADDING, HEIGHT // 2 - 5, size)  # Adjusted position for better alignment
-    display.text("Clear", WIDTH // 2 - 20, HEIGHT - 20, 0.5)  # Adjusted position to avoid overlap
-    display.update()
-
-def update_fetch_label(status):
-    """Update the Fetch button label based on the current status."""
-    if status == "checking":
-        display.pen(15)
-        display.rectangle(WIDTH // 2 - 20, HEIGHT - 10, 50, 10)  # Clear existing label area
-        display.pen(0)
-        display.text("Checking", WIDTH // 2 - 20, HEIGHT - 10, 0.5)
-    elif status == "fetch":
-        display.pen(15)
-        display.rectangle(WIDTH // 2 - 20, HEIGHT - 10, 50, 10)  # Clear existing label area
-        display.pen(0)
-        display.text("Fetch", WIDTH // 2 - 20, HEIGHT - 10, 0.5)
+    display.text(message, LEFT_PADDING, HEIGHT // 2 - 5, size)
+    display.text("Return", WIDTH // 2 - 20, HEIGHT - 10, 0.5)
     display.update()
 
 # ------------------------------
@@ -596,13 +580,27 @@ def check_downlink_message():
     global current_downlink_message, is_downlink_displayed
     try:
         turn_on_led()
-        update_fetch_label("checking")
+        # Show checking status
+        display.pen(15)
+        display.rectangle(WIDTH // 2 - 20, HEIGHT - 10, 50, 10)
+        display.pen(0)
+        display.text("Checking", WIDTH // 2 - 20, HEIGHT - 10, 0.5)
+        display.update()
         
         response = sigfox.check_downlink()
         system_monitor.log_metric('downlink_checks')
         
         if response:
-            display_downlink_message(response)
+            # Show message with Return button
+            display.pen(15)
+            display.clear()
+            display.pen(0)
+            display.font("sans")
+            display.thickness(2)
+            size = fit_text(response, WIDTH - 2 * LEFT_PADDING)
+            display.text(response, LEFT_PADDING, HEIGHT // 2 - 5, size)
+            display.text("Return", WIDTH // 2 - 20, HEIGHT - 10, 0.5)
+            display.update()
             is_downlink_displayed = True
         else:
             display_message("No New Messages")
@@ -616,7 +614,6 @@ def check_downlink_message():
         display_main_screen()
         system_monitor.log_metric('errors')
     finally:
-        update_fetch_label("fetch")
         turn_off_led()
 
 def select_message():
@@ -703,8 +700,14 @@ while True:
             time.sleep(BUTTON_PRESS_DELAY)
 
     elif badge_state.current_state == DisplayStates.MESSAGE_MENU:
-        if button_states["UP"]:
-            print("DEBUG: Processing UP button press")  # Immediate feedback
+        if button_states["A"]:
+            logger.debug("Button A pressed - returning to main screen")
+            badge_state.transition_to(DisplayStates.MAIN_SCREEN)
+            display_main_screen()
+            time.sleep(BUTTON_PRESS_DELAY)
+
+        elif button_states["UP"]:
+            print("DEBUG: Processing UP button press")
             current_index = badge_state.selected_index
             badge_state.selected_index = (current_index - 1) % len(messages)
             print(f"DEBUG: Index changed from {current_index} to {badge_state.selected_index}")
@@ -712,7 +715,7 @@ while True:
             time.sleep(BUTTON_PRESS_DELAY)
 
         elif button_states["DOWN"]:
-            print("DEBUG: Processing DOWN button press")  # Immediate feedback
+            print("DEBUG: Processing DOWN button press")
             current_index = badge_state.selected_index
             badge_state.selected_index = (current_index + 1) % len(messages)
             print(f"DEBUG: Index changed from {current_index} to {badge_state.selected_index}")
@@ -720,8 +723,20 @@ while True:
             time.sleep(BUTTON_PRESS_DELAY)
 
         elif button_states["C"]:
-            print("DEBUG: Processing C button press")  # Immediate feedback
-            select_message()
+            print("DEBUG: Processing C button press - sending message")
+            # Select and send the message directly
+            selected_message = messages[badge_state.selected_index]
+            selected_identifier = message_identifiers[badge_state.selected_index]
+            logger.info(f"Selected and sending message: {selected_message} with identifier {selected_identifier}")
+            badge_state.select_message(selected_message, selected_identifier)
+            
+            # Send the message
+            badge_state.transition_to(DisplayStates.SENDING)
+            send_predefined_message()
+            
+            # Return to main screen
+            badge_state.transition_to(DisplayStates.MAIN_SCREEN)
+            display_main_screen()
             time.sleep(BUTTON_PRESS_DELAY)
 
     if not is_on_battery():
