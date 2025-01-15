@@ -319,7 +319,7 @@ class SigfoxComm:
         'AT$QS?': {'format': r'(ERROR: parse error|-?\d+)', 'example': '-90'},  # Accept error or dBm value
         'AT$I=10': {'format': r'[0-9A-F]{6,8}', 'example': '003B4028'},
         'AT$I=11': {'format': r'[0-9A-F]{8,16}', 'example': '42F122345ABC9876'},
-        'AT$T?': {'format': r'\d{1,3}', 'example': '25'},  # Expect integer temperature
+        'AT$T?': {'format': r'\d{1,3}', 'example': '197'},  # Raw temp value before conversion
     }
 
     def __init__(self, uart, logger):
@@ -387,19 +387,30 @@ class SigfoxComm:
             expected = self.EXPECTED_RESPONSES[base_command]
             if isinstance(expected, str):
                 if expected not in response:
-                    msg = f"Unexpected response for {command} - Received: '{response}', Expected: '{expected}' (Continuing anyway...)"
-                    self.logger.warning(msg)
+                    self.logger.warning(f"Unexpected response for {command} - Got: '{response}', Expected: '{expected}'")
                     return True  # More lenient validation
             elif isinstance(expected, dict):
                 import re
-                if not re.match(expected['format'], response):
-                    msg = f"Unexpected format for {command} - Received: '{response}', Format: {expected['format']}, Example: {expected['example']} (Continuing anyway...)"
-                    self.logger.warning(msg)
+                pattern = expected['format']
+                if re.match(pattern, response):
+                    # Valid response, convert temperature if it's a temp command
+                    if base_command == 'AT$T?':
+                        temp = int(response)
+                        converted = (temp - 128) / 2
+                        self.logger.debug(f"Temperature: raw={temp}, converted={converted}°C")
+                    return True
+                else:
+                    self.logger.warning(f"Response format mismatch for {command} - Got: '{response}'")
                     return True  # More lenient validation
         return True
 
     def _send_command(self, command, read_size=64, timeout=2):
         """Send AT command and read response with detailed logging"""
+        # Use longer timeout for send frame commands
+        if command.startswith(SigfoxCommands.SEND_FRAME):
+            timeout = 12  # Give more time for transmission
+            self.logger.debug(f"Using extended timeout ({timeout}s) for send frame")
+        
         self.logger.debug(f"Sending command: {command}")
         
         try:
@@ -409,16 +420,16 @@ class SigfoxComm:
                 data = self.uart.read()
                 if data:
                     pending_data.append(data)
-            if pending_data:
-                self.logger.warning("Cleared pending data: {}".format(b''.join(pending_data)))
+                    self.logger.debug(f"Cleared pending data: {data}, Hex: {bytes_to_hex(data)}")
             
             # Send command
             full_command = f"{command}\r\n"
             bytes_written = self.uart.write(full_command)
-            self.logger.debug("Command sent: {}, Bytes written: {}, Raw bytes: {}".format(
-                full_command.strip(), bytes_written, bytes_to_hex(full_command.encode('utf-8'))))
+            self.logger.debug(f"Command sent - ASCII: {full_command.strip()}")
+            self.logger.debug(f"Command hex: {bytes_to_hex(full_command.encode())}")
+            self.logger.debug(f"Bytes written: {bytes_written}")
             
-            # Wait for response with timeout
+            # Wait for response with detailed timing
             start_time = time.time()
             response = bytearray()
             
@@ -427,94 +438,87 @@ class SigfoxComm:
                     chunk = self.uart.read(read_size)
                     if chunk:
                         response.extend(chunk)
-                        self.logger.debug("Received chunk - ASCII: {}, Hex: {}, Bytes: {}".format(
-                            chunk, bytes_to_hex(chunk), list(chunk)))
-                    if b'\r\n' in response:  # Complete response received
+                        self.logger.debug(f"Received chunk at {time.time() - start_time:.1f}s:")
+                        self.logger.debug(f"  ASCII: {chunk}")
+                        self.logger.debug(f"  Hex: {bytes_to_hex(chunk)}")
+                        self.logger.debug(f"  Bytes: {list(chunk)}")
+                    if b'\r\n' in response:
+                        self.logger.debug("Found end of response")
                         break
                 time.sleep(0.1)
             
             if response:
                 try:
                     decoded = response.decode().strip()
-                    self.logger.debug("Response received - Decoded: {}, Raw bytes: {}, Hex: {}".format(
-                        decoded, response, bytes_to_hex(response)))
+                    self.logger.debug("Final response:")
+                    self.logger.debug(f"  Decoded: {decoded}")
+                    self.logger.debug(f"  Raw bytes: {response}")
+                    self.logger.debug(f"  Hex: {bytes_to_hex(response)}")
                     
-                    # Validate response
                     if self._validate_response(command, decoded):
                         return decoded
                     return None
                     
                 except UnicodeDecodeError as e:
-                    self.logger.error("Failed to decode response - Raw bytes: {}, Hex: {}, Error: {}".format(
-                        response, bytes_to_hex(response), str(e)))
+                    self.logger.error(f"Failed to decode response: {str(e)}")
+                    self.logger.error(f"Raw bytes: {response}")
+                    self.logger.error(f"Hex: {bytes_to_hex(response)}")
                     return None
             else:
-                self.logger.warning("No response after {}s for command: {}, Expected format: {}".format(
-                    timeout, command, self.EXPECTED_RESPONSES.get(command.split('=')[0], 'Unknown')))
+                self.logger.warning(f"No response after {timeout}s")
+                self.logger.debug(f"Command was: {command}")
                 return None
                 
         except Exception as e:
-            self.logger.error("Command failed: {}, Error type: {}, Details: {}".format(
-                command, type(e).__name__, str(e)))
+            self.logger.error(f"Command failed: {command}")
+            self.logger.error(f"Error type: {type(e).__name__}")
+            self.logger.error(f"Details: {str(e)}")
             return None
 
     def send_message(self, identifier):
-        """Send message with retries and proper channel reset"""
         if not self.initialized:
             self.logger.error("Sigfox not properly initialized")
             return False
-            
-        MAX_RETRIES = 3
-        self.logger.info("Preparing to send message - ID: {}, Length: {} bytes, Hex: {}".format(
-            identifier, len(identifier), bytes_to_hex(identifier)))
         
-        # Check signal quality before sending (but don't fail if we can't get it)
-        signal = self._send_command("AT$QS?")
-        if signal:
-            if "ERROR" in signal:
-                self.logger.warning("Signal quality unavailable - continuing anyway")
+        try:
+            msg_id = int(identifier)
+            msg_type = "HELP" if msg_id <= 3 else "INFO"
+            
+            # Format payload with detailed logging
+            id_bytes = bytes([msg_id])
+            type_bytes = msg_type.encode()
+            msgid_bytes = bytes([msg_id])
+            
+            self.logger.debug("Payload components:")
+            self.logger.debug(f"  ID bytes: {id_bytes}, hex: {bytes_to_hex(id_bytes)}")
+            self.logger.debug(f"  Type bytes: {type_bytes}, hex: {bytes_to_hex(type_bytes)}")
+            self.logger.debug(f"  MsgID bytes: {msgid_bytes}, hex: {bytes_to_hex(msgid_bytes)}")
+            
+            payload = bytes_to_hex(id_bytes + type_bytes + msgid_bytes)
+            self.logger.debug(f"Combined payload: {payload}")
+            self.logger.debug(f"Payload length: {len(payload)} chars")
+            
+            command = f"{SigfoxCommands.SEND_FRAME}={payload}"
+            self.logger.debug(f"Starting transmission (this can take up to 6 seconds)")
+            self.logger.debug(f"Full command: {command}")
+            
+            response = self._send_command(command, timeout=12)
+            self.logger.debug(f"Transmission complete, response: {response}")
+            
+            if response is None:
+                self.logger.warning("No response - module likely busy with successful transmission")
+                return "UNKNOWN"
+            elif "OK" in response:
+                self.logger.info("Message confirmed sent")
+                return True
             else:
-                try:
-                    signal_dbm = int(signal)
-                    quality = 'Good' if signal_dbm > -100 else 'Poor'
-                    self.logger.info(f"Signal quality: {signal_dbm} dBm ({quality})")
-                except ValueError:
-                    self.logger.warning(f"Could not parse signal quality: {signal}")
-        
-        # Reset channels - continue even if it returns ERR_SET_STD_CONFIG_SET
-        reset_response = self._send_command(SigfoxCommands.RESET_CHANNELS, timeout=3)
-        if reset_response:
-            if "ERR_SET_STD_CONFIG_SET" in reset_response:
-                self.logger.debug("Channel reset returned expected error - continuing")
-            elif "OK" not in reset_response:
-                self.logger.warning(f"Unexpected channel reset response: {reset_response}")
-        else:
-            self.logger.warning("No response from channel reset - continuing anyway")
-
-        # Try sending with retries
-        for attempt in range(MAX_RETRIES):
-            self.logger.debug(f"Send attempt {attempt + 1}/{MAX_RETRIES}")
+                self.logger.error(f"Send failed with response: {response}")
+                return False
             
-            # Send the message
-            command = f"{SigfoxCommands.SEND_FRAME}={identifier}"
-            response = self._send_command(command, timeout=8)
-            
-            if response:
-                self.logger.debug(f"Raw response for attempt {attempt + 1}: {response}")
-                if "OK" in response:
-                    self.logger.info("Message sent successfully")
-                    return True
-                else:
-                    self.logger.warning(f"Send attempt {attempt + 1} failed: {response}")
-            else:
-                self.logger.warning(f"No response for attempt {attempt + 1}")
-            
-            if attempt < MAX_RETRIES - 1:
-                self.logger.debug("Waiting before retry...")
-                time.sleep(2)
-                
-        self.logger.error("All send attempts failed")
-        return False
+        except Exception as e:
+            self.logger.error(f"Error sending message: {str(e)}")
+            self.logger.error(f"Stack trace: ", exc_info=True)
+            return False
 
     def check_downlink(self):
         """Check for downlink messages with proper error handling"""
@@ -578,9 +582,13 @@ def send_predefined_message():
             display_message("No Message Selected")
             return
 
-        if sigfox.send_message(selected_identifier):
+        result = sigfox.send_message(selected_identifier)
+        if result is True:
             display_message("Message Sent")
             system_monitor.log_metric('message_sends')
+        elif result == "UNKNOWN":
+            display_message("Message Status Unknown")
+            system_monitor.log_metric('message_sends')  # Still count it as we see it in emails
         else:
             display_message("Send Failed")
             system_monitor.log_metric('failed_sends')
@@ -643,8 +651,8 @@ except OSError:
     print("Failed to read comms.txt file")
     messages = ["Message 1", "Message 2", "Message 3", "Message 4", "Message 5"]  # Default messages
 
-# Ensure the number of identifiers matches the number of messages
-message_identifiers = message_identifiers[:len(messages)]
+# Generate numerical identifiers (01, 02, etc.) based on number of messages
+message_identifiers = [f"{i+1:02d}" for i in range(len(messages))]  # Creates ["01", "02", "03", etc.]
 
 # Draw the main screen initially
 display_main_screen()
