@@ -45,158 +45,10 @@ ITEM_Y_PADDING = 4  # Space above/below items
 SELECTION_HEIGHT = 13  # Height of selection bar
 SELECTION_PADDING = 4  # Padding above/below selection
 
-# Initialize display
-display = badger2040.Badger2040()
-display.led(128)
-display.update_speed(badger2040.UPDATE_TURBO)  # Use TURBO for best performance
 
-# Initialize state
-changed = not badger2040.woken_by_button()
-state = {"current_item": 0}
-list_items = []
-current_page = 0  # Track current page
-
-# Load items and state
-try:
-    with open(LIST_FILE, "r") as f:
-        raw_list_items = f.read()
-        
-    if raw_list_items.find(" X\n") != -1:
-        # Convert old format
-        list_items = []
-        state = {
-            "current_item": 0,
-            "checked": []
-        }
-        for item in raw_list_items.strip().split("\n"):
-            if item.endswith(" X"):
-                state["checked"].append(True)
-                item = item[:-2]
-            else:
-                state["checked"].append(False)
-            list_items.append(item)
-        state["items_hash"] = binascii.crc32("\n".join(list_items))
-        badger_os.state_save("list", state)
-        
-        # Save in new format
-        with open(LIST_FILE, "w") as f:
-            for item in list_items:
-                f.write(f"{item}\n")
-    else:
-        list_items = [
-            item.strip()
-            for item in raw_list_items.strip().split("\n")
-        ]
-        
-except OSError:
-    # Use defaults if file doesn't exist
-    list_items = [
-        "iPhone", "Sleutels", "Multitool", "Labello",
-        "Menthol", "Rugzak", "Zonnebril"
-    ]
-    with open(LIST_FILE, "w") as f:
-        for item in list_items:
-            f.write(f"{item}\n")
-
-# Load or initialize state
-badger_os.state_load("list", state)
-items_hash = binascii.crc32("\n".join(list_items))
-if "items_hash" not in state or state["items_hash"] != items_hash:
-    state["current_item"] = 0
-    state["items_hash"] = items_hash
-    state["checked"] = [False] * len(list_items)
-    changed = True
-
-# Calculate layout
-longest_item = 0
-for i, item in enumerate(list_items):
-    while True:
-        item_length = display.measure_text(item, ITEM_TEXT_SIZE)
-        if item_length > LIST_WIDTH - ITEM_SPACING:
-            item = item[:-1]
-            list_items[i] = item
-        else:
-            break
-    longest_item = max(longest_item, item_length)
-
-# Calculate columns
-list_columns = 1
-while longest_item + ITEM_SPACING < (LIST_WIDTH // (list_columns + 1)):
-    list_columns += 1
-
-items_per_page = ((LIST_HEIGHT // ITEM_SPACING) + 1) * list_columns
-
-# Set initial display speed
-if changed:
-    display.update_speed(badger2040.UPDATE_FAST)
-else:
-    display.update_speed(badger2040.UPDATE_TURBO)
-
-
-def draw_list(items, item_states, start_item, highlighted_item, x, y, width, height, item_height, columns, full_redraw=False):
-    """Draw the list of items with efficient highlighting."""
-    item_x = 0
-    item_y = 0
-    current_col = 0
-    
-    if full_redraw:
-        # Clear entire list area on full redraw
-        display.pen(15)  # White
-        display.rectangle(0, y - (item_height // 2), WIDTH, height)
-    
-    for i in range(start_item, len(items)):
-        current_y = item_y + y
-        
-        # Only redraw items that need updating
-        if full_redraw or i == highlighted_item or i == last_highlighted_item:
-            # Clear background for this item
-            display.pen(15)  # White
-            display.rectangle(
-                item_x,
-                current_y - 4,  # Adjusted for tighter spacing
-                width // columns,
-                13  # Fixed height like comms.py
-            )
-            
-            # Draw highlight if selected
-            if i == highlighted_item:
-                display.pen(12)  # Gray
-                display.rectangle(
-                    item_x,
-                    current_y - 4,
-                    width // columns,
-                    13
-                )
-            
-            # Draw text with consistent thickness
-            display.pen(0)  # Black text
-            display.thickness(1)  # Always use thin text
-            display.text(
-                items[i],
-                item_x + x + item_height,
-                current_y,
-                ITEM_TEXT_SIZE
-            )
-            
-            # Draw checkbox
-            draw_checkbox(
-                item_x,
-                current_y - (item_height // 2),
-                item_height,
-                15,  # White background
-                0,   # Black foreground
-                2,
-                item_states[i],
-                2
-            )
-        
-        item_y += item_height
-        if item_y >= height - (item_height // 2):
-            item_x += width // columns
-            item_y = 0
-            current_col += 1
-            if current_col >= columns:
-                return
+def is_on_battery():
+    """Check if running on battery power."""
+    return not os.uname().machine.startswith("USB")
 
 
 def draw_up(x, y, width, height, thickness, padding):
@@ -338,14 +190,160 @@ def draw_checkbox(x, y, size, background, foreground, thickness, tick, padding):
         draw_tick(x, y, size, size, thickness, 2 + border)
 
 
-def is_on_battery():
-    """Check if running on battery power."""
-    return not os.uname().machine.startswith("USB")
+def draw_list(items, item_states, start_item, highlighted_item, x, y, width, height, item_height, columns, full_redraw=False):
+    """Draw the list of items with efficient highlighting."""
+    item_x = 0
+    item_y = 0
+    current_col = 0
+    
+    if full_redraw:
+        # Clear entire list area on full redraw
+        display.pen(15)  # White
+        display.rectangle(0, y - (item_height // 2), WIDTH, height)
+    
+    for i in range(start_item, len(items)):
+        current_y = item_y + y
+        
+        # Only redraw items that need updating
+        if full_redraw or i == highlighted_item or i == last_highlighted_item:
+            # Clear background for this item
+            display.pen(15)  # White
+            display.rectangle(
+                item_x,
+                current_y - 4,  # Adjusted for tighter spacing
+                width // columns,
+                13  # Fixed height like comms.py
+            )
+            
+            # Draw highlight if selected
+            if i == highlighted_item:
+                display.pen(12)  # Gray
+                display.rectangle(
+                    item_x,
+                    current_y - 4,
+                    width // columns,
+                    13
+                )
+            
+            # Draw text with consistent thickness
+            display.pen(0)  # Black text
+            display.thickness(1)  # Always use thin text
+            display.text(
+                items[i],
+                item_x + x + item_height,
+                current_y,
+                ITEM_TEXT_SIZE
+            )
+            
+            # Draw checkbox
+            draw_checkbox(
+                item_x,
+                current_y - (item_height // 2),
+                item_height,
+                15,  # White background
+                0,   # Black foreground
+                2,
+                item_states[i],
+                2
+            )
+        
+        item_y += item_height
+        if item_y >= height - (item_height // 2):
+            item_x += width // columns
+            item_y = 0
+            current_col += 1
+            if current_col >= columns:
+                return
 
+# Initialize display
+display = badger2040.Badger2040()
+display.led(128)
 
-# Main program loop
+# Set initial speed based on power source
+if is_on_battery():
+    display.update_speed(badger2040.UPDATE_TURBO)
+    badger2040.system_speed(badger2040.SYSTEM_NORMAL)
+else:
+    display.update_speed(badger2040.UPDATE_TURBO)
+    badger2040.system_speed(badger2040.SYSTEM_TURBO)
+
+# Initialize state
+changed = not badger2040.woken_by_button()
+state = {"current_item": 0}
+list_items = []
 last_highlighted_item = None  # Track last highlighted item for partial redraw
 navigation_active = False     # Track if we're in navigation mode
+
+# Load items and state
+try:
+    with open(LIST_FILE, "r") as f:
+        raw_list_items = f.read()
+        
+    if raw_list_items.find(" X\n") != -1:
+        # Convert old format
+        list_items = []
+        state = {
+            "current_item": 0,
+            "checked": []
+        }
+        for item in raw_list_items.strip().split("\n"):
+            if item.endswith(" X"):
+                state["checked"].append(True)
+                item = item[:-2]
+            else:
+                state["checked"].append(False)
+            list_items.append(item)
+        state["items_hash"] = binascii.crc32("\n".join(list_items))
+        badger_os.state_save("list", state)
+        
+        # Save in new format
+        with open(LIST_FILE, "w") as f:
+            for item in list_items:
+                f.write(f"{item}\n")
+    else:
+        list_items = [
+            item.strip()
+            for item in raw_list_items.strip().split("\n")
+        ]
+        
+except OSError:
+    # Use defaults if file doesn't exist
+    list_items = [
+        "iPhone", "Sleutels", "Multitool", "Labello",
+        "Menthol", "Rugzak", "Zonnebril"
+    ]
+    with open(LIST_FILE, "w") as f:
+        for item in list_items:
+            f.write(f"{item}\n")
+
+# Load or initialize state
+badger_os.state_load("list", state)
+items_hash = binascii.crc32("\n".join(list_items))
+if "items_hash" not in state or state["items_hash"] != items_hash:
+    state["current_item"] = 0
+    state["items_hash"] = items_hash
+    state["checked"] = [False] * len(list_items)
+    changed = True
+
+# Calculate layout
+longest_item = 0
+for i, item in enumerate(list_items):
+    while True:
+        item_length = display.measure_text(item, ITEM_TEXT_SIZE)
+        if item_length > LIST_WIDTH - ITEM_SPACING:
+            item = item[:-1]
+            list_items[i] = item
+        else:
+            break
+    longest_item = max(longest_item, item_length)
+
+# Calculate columns and pages
+list_columns = 1
+while longest_item + ITEM_SPACING < (LIST_WIDTH // (list_columns + 1)):
+    list_columns += 1
+
+items_per_page = ((LIST_HEIGHT // ITEM_SPACING) + 1) * list_columns
+current_page = state["current_item"] // items_per_page  # Calculate current page based on selected item
 
 # Do initial full draw
 display.pen(15)
@@ -369,7 +367,8 @@ display.thickness(2)
 display.line(LIST_PADDING, y, WIDTH - LIST_PADDING - ARROW_WIDTH, y)
 
 if len(list_items) > 0:
-    page_item = current_page * items_per_page
+    # Calculate starting item for current page
+    page_start_item = current_page * items_per_page
     
     # Initial list draw
     display.pen(0)
@@ -377,7 +376,7 @@ if len(list_items) > 0:
     draw_list(
         list_items,
         state["checked"],
-        page_item,
+        page_start_item,  # Use page_start_item instead of page_item
         state["current_item"],
         LIST_PADDING,
         LIST_START,
@@ -458,6 +457,7 @@ else:
 
 display.update()
 
+# Main program loop
 while True:
     if len(list_items) > 0:
         if display.pressed(badger2040.BUTTON_UP):
@@ -465,6 +465,8 @@ while True:
                 last_highlighted_item = state["current_item"]
                 state["current_item"] -= 1
                 changed = True
+                # Faster updates during navigation
+                display.update_speed(badger2040.UPDATE_TURBO)
                 time.sleep(BUTTON_PRESS_DELAY)
                 
         elif display.pressed(badger2040.BUTTON_DOWN):
@@ -472,16 +474,22 @@ while True:
                 last_highlighted_item = state["current_item"]
                 state["current_item"] += 1
                 changed = True
+                # Faster updates during navigation
+                display.update_speed(badger2040.UPDATE_TURBO)
                 time.sleep(BUTTON_PRESS_DELAY)
                 
         elif display.pressed(badger2040.BUTTON_A):
             if state["current_item"] > 0:
                 last_highlighted_item = state["current_item"]
+                old_page = state["current_item"] // items_per_page
                 state["current_item"] = max(
                     state["current_item"] - items_per_page // list_columns,
                     0
                 )
-                changed = True
+                current_page = state["current_item"] // items_per_page
+                if old_page != current_page:
+                    changed = True
+                    display.update_speed(badger2040.UPDATE_TURBO)
                 time.sleep(BUTTON_PRESS_DELAY)
                 
         elif display.pressed(badger2040.BUTTON_B):
@@ -492,11 +500,15 @@ while True:
         elif display.pressed(badger2040.BUTTON_C):
             if state["current_item"] < len(list_items) - 1:
                 last_highlighted_item = state["current_item"]
+                old_page = state["current_item"] // items_per_page
                 state["current_item"] = min(
                     state["current_item"] + items_per_page // list_columns,
                     len(list_items) - 1
                 )
-                changed = True
+                current_page = state["current_item"] // items_per_page
+                if old_page != current_page:
+                    changed = True
+                    display.update_speed(badger2040.UPDATE_TURBO)
                 time.sleep(BUTTON_PRESS_DELAY)
 
     if changed:
@@ -639,6 +651,10 @@ while True:
                     )
             
             display.update()
+            
+            # Reset to normal speed after update
+            if is_on_battery():
+                display.update_speed(badger2040.UPDATE_NORMAL)
             
         changed = False
         
