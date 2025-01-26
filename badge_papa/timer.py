@@ -7,6 +7,114 @@ import badger2040
 import badger_os
 import time
 import gfx
+from machine import UART
+from machine import Pin
+
+# Initialize UART for Sigfox
+lora = UART(0, baudrate=9600, tx=Pin(0), rx=Pin(1))
+
+# Simple Sigfox sender for timer notifications
+class TimerSigfox:
+    def __init__(self, uart):
+        self.uart = uart
+        
+        # Mapping dictionaries for encoding
+        self.target_codes = {
+            "wc": "t1",
+            "living": "t2", 
+            "eva": "t3"
+        }
+        
+        # Read the timer.txt file to get valid name-duration pairs
+        try:
+            with open("timer.txt", "r") as f:
+                lines = f.readlines()
+                self.valid_timers = {}
+                self.name_codes = {}
+                code_index = 1
+                
+                # Process pairs of lines (name and duration)
+                for i in range(0, len(lines), 2):
+                    if i + 1 < len(lines):
+                        name = lines[i].strip()
+                        duration = lines[i + 1].strip()
+                        # Store the name-duration pair
+                        self.valid_timers[name] = int(duration)
+                        # Create a name code (n1, n2, etc.)
+                        self.name_codes[name] = f"n{code_index}"
+                        code_index += 1
+                        
+        except Exception as e:
+            print(f"Error reading timer.txt: {e}")
+            self.valid_timers = {}
+            self.name_codes = {}
+        
+    def _send_command(self, command, timeout=2):
+        try:
+            # Clear any pending data
+            while self.uart.any():
+                self.uart.read()
+            
+            # Send command
+            full_command = f"{command}\r\n"
+            self.uart.write(full_command)
+            
+            # Wait for response
+            start_time = time.time()
+            response = bytearray()
+            
+            while (time.time() - start_time) < timeout:
+                if self.uart.any():
+                    chunk = self.uart.read()
+                    if chunk:
+                        response.extend(chunk)
+                    if b'\r\n' in response:
+                        break
+                time.sleep(0.1)
+            
+            return response.decode().strip() if response else None
+            
+        except Exception as e:
+            print(f"Sigfox error: {e}")
+            return None
+
+    def send_timer_start(self, display, name, duration_secs):
+        try:
+            # Verify this is a valid timer from timer.txt
+            if name not in self.valid_timers:
+                print(f"Invalid timer name: {name}")
+                return None
+                
+            # Verify the duration matches timer.txt
+            if duration_secs != self.valid_timers[name]:
+                print(f"Duration mismatch for {name}: expected {self.valid_timers[name]}, got {duration_secs}")
+                return None
+            
+            # Get codes from mapping
+            target_code = self.target_codes.get(display, "t1")  # Default to wc if unknown
+            name_code = self.name_codes.get(name)  # No default - must be valid timer name
+            
+            if not name_code:
+                print(f"No code mapping for timer: {name}")
+                return None
+            
+            # Format duration as 4 digits
+            duration_str = f"{duration_secs:04d}"
+            
+            # Combine into message (target(2) + name(2) + duration(4))
+            msg = f"{target_code}{name_code}{duration_str}"
+            
+            # Convert to hex
+            msg_hex = ''.join([f"{ord(c):02x}" for c in msg])
+            command = f"AT$SF={msg_hex}"
+            
+            return self._send_command(command, timeout=6)
+        except Exception as e:
+            print(f"Failed to send timer notification: {e}")
+            return None
+
+# Initialize Sigfox
+timer_sigfox = TimerSigfox(lora)
 
 # Default title and key/value file
 TIMER_TITLE = "Wat moet ik doen?"
@@ -507,19 +615,29 @@ def draw_1bars():
 # The meat of the timer :-)
 def countdown(time0):
     badger2040.system_speed(badger2040.SYSTEM_NORMAL)
+    
+    # Get the current activity name and duration
+    activity0, time0_str = ACTIVITY_DURATION[state["selected_activity"]]
+    try:
+        # Send timer start notification for any timer
+        display = "wc"  # Default display - could be made configurable
+        name = activity0.strip()  # Use the actual timer name
+        duration_secs = int(time0_str)  # Duration in seconds
+        print(f"Sending timer notification: {display}, {name}, {duration_secs}s")
+        timer_sigfox.send_timer_start(display, name, duration_secs)
+    except Exception as e:
+        print(f"Failed to send timer notification: {e}")
+    
     while time0:
         mins, secs = divmod(time0, 60)
-        timeformat = '{:02d}:{:02d}'.format(mins,secs)
+        timeformat = '{:02d}:{:02d}'.format(mins, secs)
         print(timeformat, end='\r')
-        #print("bar_length", bar_length)
-        #print("time0", time0)
         display.led(255)
         if time0 > bar_length * 5:
             global updated_timer
             updated_timer = mins
             draw_6bars()
         if time0 > bar_length * 4 and time0 < bar_length * 5:
-            global updated_timer
             updated_timer = mins
             draw_5bars()
         if time0 > bar_length * 3 and time0 < bar_length * 4:
@@ -531,20 +649,13 @@ def countdown(time0):
         if time0 > bar_length * 1 and time0 < bar_length * 2:
             updated_timer = mins
             draw_2bars()
-        if time0  < bar_length * 1:
+        if time0 < bar_length * 1:
             updated_timer = mins
             draw_1bars()        
-        time.sleep(0.5) # Split the 1 sec countdown into 2* 0.5 secs to enable LED blink
+        time.sleep(0.5)  # Split the 1 sec countdown into 2* 0.5 secs for LED blink
         display.led(0)
         time.sleep(0.5)
         time0 -= 1
-        #display.led(0) # get to this when countdown function is finished
-        #display.pen(15)
-        #display.rectangle(100, 45, 100, 30)
-        #display.pen(0)
-        #display.thickness(2)
-        #display.text(timeformat, 100, 60, TIME_TEXT_SIZE)
-        #display.update()
     print("stoppppp")
     display.update_speed(badger2040.UPDATE_FAST)
 
