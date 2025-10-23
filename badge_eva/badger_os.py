@@ -5,6 +5,9 @@ import json
 import machine
 import badger2040
 
+# Global quit flag for cooperative exit
+_quit_requested = False
+
 
 def get_battery_level():
     # Battery measurement
@@ -117,7 +120,10 @@ def launch(file):
     button_c = machine.Pin(badger2040.BUTTON_C, machine.Pin.IN, machine.Pin.PULL_DOWN)
 
     def quit_to_launcher(pin):
+        global _quit_requested
         if button_a.value() and button_c.value():
+            _quit_requested = True
+            # Still do immediate reset as fallback
             machine.reset()
 
     button_a.irq(trigger=machine.Pin.IRQ_RISING, handler=quit_to_launcher)
@@ -179,3 +185,51 @@ def warning(display, message, width=badger2040.WIDTH - 40, height=badger2040.HEI
         display.text(lines[i], (badger2040.WIDTH - length) // 2, (badger2040.HEIGHT // 2) + current_line, text_size)
 
     display.update()
+
+
+# ------------------------------
+#      Cooperative Quit Helpers
+# ------------------------------
+
+def poll_global_quit():
+    """Check if A+C global quit has been requested and both buttons are still held"""
+    global _quit_requested
+    if _quit_requested:
+        # Verify buttons are still held to avoid false triggers
+        button_a = machine.Pin(badger2040.BUTTON_A, machine.Pin.IN, machine.Pin.PULL_DOWN)
+        button_c = machine.Pin(badger2040.BUTTON_C, machine.Pin.IN, machine.Pin.PULL_DOWN)
+        if button_a.value() and button_c.value():
+            return True
+        else:
+            _quit_requested = False  # Reset if buttons released
+    return False
+
+
+def interruptible_sleep(duration, check_interval=0.1):
+    """Sleep that can be interrupted by A+C global quit"""
+    start_time = time.time()
+    while (time.time() - start_time) < duration:
+        if poll_global_quit():
+            return True  # Interrupted
+        time.sleep(check_interval)
+    return False  # Completed normally
+
+
+def safe_display_update(display):
+    """Display update that checks for quit before and after"""
+    if poll_global_quit():
+        return True  # Quit requested
+    display.update()
+    if poll_global_quit():
+        return True  # Quit requested after update
+    return False  # No quit
+
+
+def is_quit_long_press(min_ms=300):
+    """Check if A+C has been held for minimum duration to avoid accidental quits"""
+    if not poll_global_quit():
+        return False
+    
+    # Simple implementation - could be enhanced with timing
+    time.sleep(min_ms / 1000.0)
+    return poll_global_quit()

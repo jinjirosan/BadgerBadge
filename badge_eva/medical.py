@@ -5,6 +5,8 @@
 
 import badger2040
 import gfx
+import badger_os
+import machine
 
 # Default title and key/value file
 MEDICAL_FILE = "medical.txt"
@@ -184,6 +186,10 @@ else:
 
 # Main program loop
 while True:
+    # Check for A+C global quit first
+    if badger_os.poll_global_quit():
+        machine.reset()
+    
     if display.pressed(badger2040.BUTTON_UP):
         changed = True
 
@@ -200,7 +206,11 @@ while True:
         draw_top_row()
         draw_medical_info()
         draw_vertical_lines()  # Add the vertical lines on the right side
-        display.update()
+        
+        # Use safe display update that checks for quit
+        if badger_os.safe_display_update(display):
+            machine.reset()
+            
         changed = False
         display.led(0)
 
